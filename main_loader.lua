@@ -33,7 +33,7 @@ print("[AI Hub] Loading core modules...")
 local UI = fetch("ui_core.lua")
 local Env = fetch("environment_controller.lua")
 local Web = fetch("web_scraper.lua")
-local AI = fetch("ai_bridge.lua")
+local AI = fetch("ai_model.lua")
 
 UI.Log("Modules loaded successfully. Core systems online.")
 
@@ -47,15 +47,17 @@ UI.OnInput(function(prompt)
         UI.Log("Web: " .. tostring(result))
     else
         UI.Log("Analyzing environment and prompt...")
-        local context = Env.GetGameState()
-        local aiResponse, actionCode = AI.ProcessPrompt(prompt, context)
-        
-        UI.Log("AI: " .. tostring(aiResponse))
-        if actionCode then
-            local success, err = Env.Execute(actionCode)
-            if not success then
-                UI.Log("Execution Error: " .. tostring(err))
+        task.spawn(function()
+            local context = Env.GetGameState()
+            local aiResponse, actionCode = AI.ProcessPrompt(prompt, context)
+            
+            UI.Log("AI: " .. tostring(aiResponse))
+            if actionCode then
+                local success, err = Env.Execute(actionCode)
+                if not success then
+                    UI.Log("Execution Error: " .. tostring(err))
+                end
             end
-        end
+        end)
     end
 end)
