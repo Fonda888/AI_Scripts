@@ -42,11 +42,86 @@ TitleBar.TextColor3 = MainColors.Text
 TitleBar.Font = Enum.Font.GothamBold
 TitleBar.TextSize = 14
 TitleBar.TextXAlignment = Enum.TextXAlignment.Left
+TitleBar.Active = true
 TitleBar.Parent = MainFrame
 
 local TitleCorner = Instance.new("UICorner")
 TitleCorner.CornerRadius = UDim.new(0, 8)
 TitleCorner.Parent = TitleBar
+
+-- Minimize Button (-)
+local MinimizeButton = Instance.new("TextButton")
+MinimizeButton.Name = "MinimizeButton"
+MinimizeButton.Size = UDim2.new(0, 25, 0, 22)
+MinimizeButton.Position = UDim2.new(1, -55, 0, 4)
+MinimizeButton.BackgroundColor3 = MainColors.Bg
+MinimizeButton.TextColor3 = MainColors.Text
+MinimizeButton.Text = "-"
+MinimizeButton.Font = Enum.Font.GothamBold
+MinimizeButton.TextSize = 16
+MinimizeButton.Parent = TitleBar
+
+local MinCorner = Instance.new("UICorner")
+MinCorner.CornerRadius = UDim.new(0, 4)
+MinCorner.Parent = MinimizeButton
+
+-- Destroy Button (X)
+local DestroyButton = Instance.new("TextButton")
+DestroyButton.Name = "DestroyButton"
+DestroyButton.Size = UDim2.new(0, 25, 0, 22)
+DestroyButton.Position = UDim2.new(1, -28, 0, 4)
+DestroyButton.BackgroundColor3 = Color3.fromRGB(180, 40, 40)
+DestroyButton.TextColor3 = MainColors.Text
+DestroyButton.Text = "X"
+DestroyButton.Font = Enum.Font.GothamBold
+DestroyButton.TextSize = 12
+DestroyButton.Parent = TitleBar
+
+local DestroyCorner = Instance.new("UICorner")
+DestroyCorner.CornerRadius = UDim.new(0, 4)
+DestroyCorner.Parent = DestroyButton
+
+-- Restore Button Setup
+local RestoreButton = nil
+
+local function CreateRestoreButton()
+    if RestoreButton and RestoreButton.Parent then
+        RestoreButton.Visible = true
+        return
+    end
+
+    RestoreButton = Instance.new("TextButton")
+    RestoreButton.Name = "AIRestoreButton"
+    RestoreButton.Size = UDim2.new(0, 45, 0, 45)
+    RestoreButton.Position = UDim2.new(0.05, 0, 0.75, 0)
+    RestoreButton.BackgroundColor3 = Color3.fromHex("#408080")
+    RestoreButton.TextColor3 = MainColors.Text
+    RestoreButton.Text = "AI"
+    RestoreButton.Font = Enum.Font.GothamBold
+    RestoreButton.TextSize = 16
+    RestoreButton.Active = true
+    RestoreButton.Draggable = true
+    RestoreButton.Parent = ScreenGui
+
+    local ResCorner = Instance.new("UICorner")
+    ResCorner.CornerRadius = UDim.new(0, 8)
+    ResCorner.Parent = RestoreButton
+
+    RestoreButton.MouseButton1Click:Connect(function()
+        MainFrame.Visible = true
+        RestoreButton.Visible = false
+    end)
+end
+
+MinimizeButton.MouseButton1Click:Connect(function()
+    MainFrame.Visible = false
+    CreateRestoreButton()
+end)
+
+DestroyButton.MouseButton1Click:Connect(function()
+    print("[AI Runtime Core] Interface destroyed successfully.")
+    ScreenGui:Destroy()
+end)
 
 -- Console Output
 local OutputScroll = Instance.new("ScrollingFrame")
