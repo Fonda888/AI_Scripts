@@ -39,10 +39,10 @@ local AI = fetch("ai_model.lua")
 UI.Log("All modules loaded. AI ready.")
 
 UI.Log("⚠️ WARNING: Use the AI for exploiting at your own risk.")
-UI.Log TextColor3.fromRGB("255, 128, 0")
+UI.Log.TextColor = Color3.fromRGB("255, 128, 0")
 
 UI.Log("ℹ️ INFO: There is a daily limit of use.")
-UI.Log TextColor3.fromRGB("0, 128, 255")
+UI.Log.TextColor = Color3.fromRGB("0, 128, 255")
 
 UI.OnInput(function(prompt)
     UI.Log("YOU: " .. prompt)
@@ -59,7 +59,7 @@ UI.OnInput(function(prompt)
                 local success, err = Env.Execute(actionCode)
                 if not success then
                     UI.Log("❌️ EXECUTION ERROR: " .. tostring(err))
-                    UI.Log TextColor3.fromRGB("255, 0, 0")
+                    UI.Log.TextColor = Color3.fromRGB("255, 0, 0")
                 else
                     UI.Log("Executed successfully.")
                 end
