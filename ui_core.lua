@@ -8,8 +8,8 @@ local LocalPlayer = Players.LocalPlayer
 
 local UI = {}
 local MainColors = {
-    Bg = Color3.fromRGB(64, 128, 128),     -- #408080
-    Accent = Color3.fromRGB(64, 64, 64),   -- #404040
+    Bg = Color3.fromRGB(64, 128, 128),
+    Accent = Color3.fromRGB(64, 64, 64),
     Text = Color3.fromRGB(255, 255, 255)
 }
 
@@ -66,7 +66,6 @@ local DestroyButton = Instance.new("TextButton")
 DestroyButton.Name = "DestroyButton"
 DestroyButton.Size = UDim2.new(0, 30, 0, 22)
 DestroyButton.Position = UDim2.new(1, -33, 0, 4)
--- Converted #804040 to RGB (128, 64, 64) for mobile compatibility
 DestroyButton.BackgroundColor3 = Color3.fromRGB(128, 64, 64)
 DestroyButton.TextColor3 = MainColors.Text
 DestroyButton.Text = "X"
@@ -93,7 +92,7 @@ local function CreateRestoreButton()
     RestoreButton.TextColor3 = MainColors.Text
     RestoreButton.Text = "AI"
     RestoreButton.Font = Enum.Font.SourceSansBold
-    RestoreButton.TextSize = 18
+    RestoreButton.TextSize = 20
     RestoreButton.Active = true
     RestoreButton.Draggable = true
     RestoreButton.Parent = ScreenGui
