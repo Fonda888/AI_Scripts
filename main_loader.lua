@@ -18,12 +18,12 @@ local function fetch(fileName)
     end)
 
     if not success or not content or content == "" then 
-        error("Failed to load module: " .. fileName .. (err and (" | Error: " .. tostring(err)) or "")) 
+        error("❌️ LOADING ERROR: Failed to load module: " .. fileName .. (err and (" | ERROR: " .. tostring(err)) or ""))
     end
     
     local compiledFunc, compileErr = loadstring(content)
     if not compiledFunc then
-        error("Failed to compile module: " .. fileName .. " | " .. tostring(compileErr))
+        error("❌️ LOADING ERROR: Failed to compile module: " .. fileName .. " | " .. tostring(compileErr))
     end
 
     return compiledFunc()
@@ -33,7 +33,6 @@ print("Loading modules, please wait...")
 
 local UI = fetch("ui_core.lua")
 local Env = fetch("environment_controller.lua")
-local Web = fetch("web_scraper.lua")
 local AI = fetch("ai_model.lua")
 
 UI.Log("All modules loaded. AI ready.")
