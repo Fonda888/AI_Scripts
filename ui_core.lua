@@ -4,6 +4,8 @@
 local CoreGui = game:GetService("CoreGui")
 local Players = game:GetService("Players")
 local UserInputService = game:GetService("UserInputService")
+local TeleportService = game:GetService("TeleportService")
+local HttpService = game:GetService("HttpService")
 local LocalPlayer = Players.LocalPlayer
 
 local UI = {}
@@ -130,7 +132,7 @@ UIListLayout.Padding = UDim.new(0, 4)
 UIListLayout.SortOrder = Enum.SortOrder.LayoutOrder
 
 local InputBox = Instance.new("TextBox")
-InputBox.Size = UDim2.new(1, -20, 0, 35)
+InputBox.Size = UDim2.new(1, -55, 0, 35)
 InputBox.Position = UDim2.new(0, 10, 1, -45)
 InputBox.BackgroundColor3 = MainColors.Accent
 InputBox.Text = ""
@@ -145,6 +147,169 @@ InputBox.Parent = MainFrame
 local InputCorner = Instance.new("UICorner")
 InputCorner.CornerRadius = UDim.new(0, 6)
 InputCorner.Parent = InputBox
+
+-- ========================================================
+-- SETTINGS MENU 
+-- ========================================================
+local SettingsBtn = Instance.new("TextButton")
+SettingsBtn.Size = UDim2.new(0, 35, 0, 35)
+SettingsBtn.Position = UDim2.new(1, -45, 1, -45)
+SettingsBtn.BackgroundColor3 = MainColors.Accent
+SettingsBtn.TextColor3 = MainColors.Text
+SettingsBtn.Text = "⚙️"
+SettingsBtn.Font = Enum.Font.SourceSansBold
+SettingsBtn.TextSize = 18
+SettingsBtn.Parent = MainFrame
+
+local SettingsBtnCorner = Instance.new("UICorner")
+SettingsBtnCorner.CornerRadius = UDim.new(0, 6)
+SettingsBtnCorner.Parent = SettingsBtn
+
+local SettingsFrame = Instance.new("Frame")
+SettingsFrame.Size = UDim2.new(1, -20, 1, -95)
+SettingsFrame.Position = UDim2.new(0, 10, 0, 40)
+SettingsFrame.BackgroundColor3 = MainColors.Accent
+SettingsFrame.BorderSizePixel = 0
+SettingsFrame.Visible = false
+SettingsFrame.Parent = MainFrame
+
+local SettingsCorner = Instance.new("UICorner")
+SettingsCorner.CornerRadius = UDim.new(0, 6)
+SettingsCorner.Parent = SettingsFrame
+
+local SettingsTitleLabel = Instance.new("TextLabel")
+SettingsTitleLabel.Size = UDim2.new(1, 0, 0, 25)
+SettingsTitleLabel.BackgroundTransparency = 1
+SettingsTitleLabel.Text = "Settings"
+SettingsTitleLabel.TextColor3 = MainColors.Text
+SettingsTitleLabel.Font = Enum.Font.SourceSansBold
+SettingsTitleLabel.TextSize = 16
+SettingsTitleLabel.Parent = SettingsFrame
+
+local BgSubtitle = Instance.new("TextLabel")
+BgSubtitle.Size = UDim2.new(1, -10, 0, 20)
+BgSubtitle.Position = UDim2.new(0, 10, 0, 25)
+BgSubtitle.BackgroundTransparency = 1
+BgSubtitle.Text = "Background"
+BgSubtitle.TextColor3 = Color3.fromRGB(200, 200, 200)
+BgSubtitle.Font = Enum.Font.SourceSansBold
+BgSubtitle.TextSize = 14
+BgSubtitle.TextXAlignment = Enum.TextXAlignment.Left
+BgSubtitle.Parent = SettingsFrame
+
+local ColorContainer = Instance.new("Frame")
+ColorContainer.Size = UDim2.new(1, -10, 0, 30)
+ColorContainer.Position = UDim2.new(0, 10, 0, 45)
+ColorContainer.BackgroundTransparency = 1
+ColorContainer.Parent = SettingsFrame
+
+local UIListLayoutColors = Instance.new("UIListLayout")
+UIListLayoutColors.FillDirection = Enum.FillDirection.Horizontal
+UIListLayoutColors.Padding = UDim.new(0, 5)
+UIListLayoutColors.Parent = ColorContainer
+
+local backgroundColors = {
+    Color3.fromRGB(0, 0, 0),
+    Color3.fromRGB(128, 128, 128),
+    Color3.fromRGB(64, 128, 128),
+    Color3.fromRGB(128, 64, 128),
+    Color3.fromRGB(128, 128, 64)
+}
+
+for _, color in ipairs(backgroundColors) do
+    local colorBtn = Instance.new("TextButton")
+    colorBtn.Size = UDim2.new(0, 30, 0, 30)
+    colorBtn.BackgroundColor3 = color
+    colorBtn.Text = ""
+    colorBtn.Parent = ColorContainer
+    
+    local cCorner = Instance.new("UICorner")
+    cCorner.CornerRadius = UDim.new(0, 4)
+    cCorner.Parent = colorBtn
+    
+    colorBtn.MouseButton1Click:Connect(function()
+        MainFrame.BackgroundColor3 = color
+    end)
+end
+
+local OthersSubtitle = Instance.new("TextLabel")
+OthersSubtitle.Size = UDim2.new(1, -10, 0, 20)
+OthersSubtitle.Position = UDim2.new(0, 10, 0, 85)
+OthersSubtitle.BackgroundTransparency = 1
+OthersSubtitle.Text = "Others"
+OthersSubtitle.TextColor3 = Color3.fromRGB(200, 200, 200)
+OthersSubtitle.Font = Enum.Font.SourceSansBold
+OthersSubtitle.TextSize = 14
+OthersSubtitle.TextXAlignment = Enum.TextXAlignment.Left
+OthersSubtitle.Parent = SettingsFrame
+
+local function createActionBtn(text, yPos)
+    local btn = Instance.new("TextButton")
+    btn.Size = UDim2.new(1, -20, 0, 25)
+    btn.Position = UDim2.new(0, 10, 0, yPos)
+    btn.BackgroundColor3 = Color3.fromRGB(80, 80, 80)
+    btn.TextColor3 = MainColors.Text
+    btn.Text = text
+    btn.Font = Enum.Font.SourceSansBold
+    btn.TextSize = 14
+    btn.Parent = SettingsFrame
+    
+    local bCorner = Instance.new("UICorner")
+    bCorner.CornerRadius = UDim.new(0, 4)
+    bCorner.Parent = btn
+    return btn
+end
+
+local ClearBtn = createActionBtn("Clear cache", 110)
+local RejoinBtn = createActionBtn("Rejoin", 140)
+local HopBtn = createActionBtn("Server hop", 170)
+
+SettingsBtn.MouseButton1Click:Connect(function()
+    SettingsFrame.Visible = not SettingsFrame.Visible
+    OutputScroll.Visible = not SettingsFrame.Visible
+end)
+
+local logCount = 0
+
+ClearBtn.MouseButton1Click:Connect(function()
+    for _, child in ipairs(OutputScroll:GetChildren()) do
+        if child:IsA("TextLabel") then
+            child:Destroy()
+        end
+    end
+    logCount = 0
+    OutputScroll.CanvasSize = UDim2.new(0, 0, 0, 0)
+end)
+
+RejoinBtn.MouseButton1Click:Connect(function()
+    if #Players:GetPlayers() <= 1 then
+        LocalPlayer:Kick("\nRejoining...")
+        task.wait()
+        TeleportService:Teleport(game.PlaceId, LocalPlayer)
+    else
+        TeleportService:TeleportToPlaceInstance(game.PlaceId, game.JobId, LocalPlayer)
+    end
+end)
+
+HopBtn.MouseButton1Click:Connect(function()
+    local url = "https://games.roblox.com/v1/games/" .. game.PlaceId .. "/servers/Public?sortOrder=Asc&limit=100"
+    local success, result = pcall(function()
+        return HttpService:JSONDecode(game:HttpGet(url))
+    end)
+    
+    if success and result and result.data then
+        for _, server in ipairs(result.data) do
+            if server.playing < server.maxPlayers and server.id ~= game.JobId then
+                TeleportService:TeleportToPlaceInstance(game.PlaceId, server.id, LocalPlayer)
+                break
+            end
+        end
+    end
+end)
+
+-- ========================================================
+-- DRAGGING & LOGGING
+-- ========================================================
 
 local dragging = false
 local dragStart = nil
@@ -174,15 +339,16 @@ UserInputService.InputChanged:Connect(function(input)
     end
 end)
 
-local logCount = 0
-function UI.Log(text)
+function UI.Log(text, customColor)
     logCount = logCount + 1
     local msg = Instance.new("TextLabel")
     msg.Size = UDim2.new(1, -10, 0, 0)
     msg.AutomaticSize = Enum.AutomaticSize.Y
     msg.BackgroundTransparency = 1
     msg.Text = "> " .. tostring(text)
-    msg.TextColor3 = MainColors.Text
+    
+    msg.TextColor3 = customColor or MainColors.Text 
+    
     msg.Font = Enum.Font.Code
     msg.TextSize = 13
     msg.TextXAlignment = Enum.TextXAlignment.Left
