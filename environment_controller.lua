@@ -2,23 +2,46 @@
 -- ENVIRONMENT CONTROLLER MODULE
 -- ========================================================
 local Players = game:GetService("Players")
+local Workspace = game:GetService("Workspace")
+
 local Env = {}
 
 function Env.GetGameState()
-    -- Gathers basic game context to feed to the AI so it knows what it is manipulating
+    local localPlayer = Players.LocalPlayer
     local context = "Players in server: " .. #Players:GetPlayers() .. ". "
-    context = context .. "LocalPlayer: " .. Players.LocalPlayer.Name .. ". "
     
+    if localPlayer then
+        context = context .. "LocalPlayer: " .. localPlayer.Name .. ". "
+        local char = localPlayer.Character
+        if char then
+            local hrp = char:FindFirstChild("HumanoidRootPart")
+            local humanoid = char:FindFirstChildOfClass("Humanoid")
+            
+            if hrp then
+                context = context .. string.format("Pos: (%.1f, %.1f, %.1f). ", hrp.Position.X, hrp.Position.Y, hrp.Position.Z)
+            end
+            if humanoid then
+                context = context .. string.format("Health: %d/%d. WalkSpeed: %d. ", math.floor(humanoid.Health), math.floor(humanoid.MaxHealth), humanoid.WalkSpeed)
+            end
+        end
+    end
+
     local parts = 0
-    for _, obj in ipairs(workspace:GetDescendants()) do
-        if obj:IsA("BasePart") then parts = parts + 1 end
+    for _, obj in ipairs(Workspace:GetDescendants()) do
+        if obj:IsA("BasePart") then
+            parts = parts + 1
+        end
     end
     context = context .. "Workspace BaseParts: " .. parts .. "."
-    
+
     return context
 end
 
 function Env.Execute(codeString)
+    if not codeString or codeString == "" then
+        return false, "No code provided to execute."
+    end
+
     local func, compileError = loadstring(codeString)
     if func then
         local success, runtimeError = pcall(func)
