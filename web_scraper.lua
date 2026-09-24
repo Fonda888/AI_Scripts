@@ -3,20 +3,29 @@
 -- ========================================================
 local HttpService = game:GetService("HttpService")
 local Web = {}
-local requestFunc = (request or http_request or (syn and syn.request))
+
+-- Added broader executor support (e.g., fluxus) to match the new AI module
+local requestFunc = (request or http_request or (syn and syn.request) or (fluxus and fluxus.request))
 
 function Web.Search(query)
     if not requestFunc then
         return "Web search blocked: Executor lacks HTTP request capability."
     end
     
+    -- Smarter query cleaning to improve API hit rates
     local lowerQuery = string.lower(query)
-    local cleanQuery = string.gsub(lowerQuery, "search web for", "")
-    cleanQuery = string.gsub(cleanQuery, "search web", "")
-    cleanQuery = string.gsub(cleanQuery, "search", "")
-    cleanQuery = string.gsub(cleanQuery, "lookup", "")
+    local cleanQuery = lowerQuery:gsub("search the web for", "")
+                                 :gsub("search web for", "")
+                                 :gsub("search for", "")
+                                 :gsub("search", "")
+                                 :gsub("lookup", "")
+                                 :gsub("who is", "")
+                                 :gsub("what is", "")
+    
+    -- Trim leading and trailing whitespace
     cleanQuery = string.match(cleanQuery, "^%s*(.-)%s*$")
     
+    -- Fallback if the entire prompt was just trigger words
     if not cleanQuery or cleanQuery == "" then
         cleanQuery = query
     end
@@ -39,12 +48,12 @@ function Web.Search(query)
             elseif data.RelatedTopics and #data.RelatedTopics > 0 and data.RelatedTopics[1].Text then
                 return data.RelatedTopics[1].Text
             else
-                return "No abstract found for: " .. cleanQuery
+                return "No direct web summary found for: '" .. cleanQuery .. "'. Try using more specific keywords."
             end
         end
     end
 
-    return "Failed to establish secure web connection."
+    return "Failed to establish a secure web connection or the API is currently unavailable."
 end
 
 return Web
