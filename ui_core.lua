@@ -8,8 +8,8 @@ local LocalPlayer = Players.LocalPlayer
 
 local UI = {}
 local MainColors = {
-    Bg = Color3.fromHex("#408080"),
-    Accent = Color3.fromHex("#404040"),
+    Bg = Color3.fromRGB(64, 128, 128),     -- #408080
+    Accent = Color3.fromRGB(64, 64, 64),   -- #404040
     Text = Color3.fromRGB(255, 255, 255)
 }
 
@@ -17,7 +17,8 @@ local ScreenGui = Instance.new("ScreenGui")
 ScreenGui.Name = "AI_Hub_Runtime"
 ScreenGui.ResetOnSpawn = false
 pcall(function() ScreenGui.Parent = CoreGui end)
-if not ScreenGui.Parent then ScreenGui.Parent = LocalPlayer:WaitForChild("PlayerGui") end
+if not ScreenGui.Parent then ScreenGui.Parent = LocalPlayer:WaitForChild("PlayerGui", 5) end
+if not ScreenGui.Parent then return end
 
 local MainFrame = Instance.new("Frame")
 MainFrame.Size = UDim2.new(0, 450, 0, 320)
@@ -36,8 +37,8 @@ TitleBar.Size = UDim2.new(1, 0, 0, 30)
 TitleBar.BackgroundColor3 = MainColors.Accent
 TitleBar.Text = "  AI Runtime Core"
 TitleBar.TextColor3 = MainColors.Text
-TitleBar.Font = Enum.Font.GothamBold
-TitleBar.TextSize = 14
+TitleBar.Font = Enum.Font.SourceSansBold
+TitleBar.TextSize = 16
 TitleBar.TextXAlignment = Enum.TextXAlignment.Left
 TitleBar.Active = true
 TitleBar.Parent = MainFrame
@@ -48,13 +49,13 @@ TitleCorner.Parent = TitleBar
 
 local MinimizeButton = Instance.new("TextButton")
 MinimizeButton.Name = "MinimizeButton"
-MinimizeButton.Size = UDim2.new(0, 25, 0, 22)
-MinimizeButton.Position = UDim2.new(1, -55, 0, 4)
+MinimizeButton.Size = UDim2.new(0, 30, 0, 22)
+MinimizeButton.Position = UDim2.new(1, -65, 0, 4)
 MinimizeButton.BackgroundColor3 = MainColors.Bg
 MinimizeButton.TextColor3 = MainColors.Text
 MinimizeButton.Text = "-"
-MinimizeButton.Font = Enum.Font.GothamBold
-MinimizeButton.TextSize = 16
+MinimizeButton.Font = Enum.Font.SourceSansBold
+MinimizeButton.TextSize = 18
 MinimizeButton.Parent = TitleBar
 
 local MinCorner = Instance.new("UICorner")
@@ -63,13 +64,14 @@ MinCorner.Parent = MinimizeButton
 
 local DestroyButton = Instance.new("TextButton")
 DestroyButton.Name = "DestroyButton"
-DestroyButton.Size = UDim2.new(0, 25, 0, 22)
-DestroyButton.Position = UDim2.new(1, -28, 0, 4)
-DestroyButton.BackgroundColor3 = Color3.fromHEX(#804040)
+DestroyButton.Size = UDim2.new(0, 30, 0, 22)
+DestroyButton.Position = UDim2.new(1, -33, 0, 4)
+-- Converted #804040 to RGB (128, 64, 64) for mobile compatibility
+DestroyButton.BackgroundColor3 = Color3.fromRGB(128, 64, 64)
 DestroyButton.TextColor3 = MainColors.Text
 DestroyButton.Text = "X"
-DestroyButton.Font = Enum.Font.GothamBold
-DestroyButton.TextSize = 12
+DestroyButton.Font = Enum.Font.SourceSansBold
+DestroyButton.TextSize = 14
 DestroyButton.Parent = TitleBar
 
 local DestroyCorner = Instance.new("UICorner")
@@ -77,7 +79,6 @@ DestroyCorner.CornerRadius = UDim.new(0, 4)
 DestroyCorner.Parent = DestroyButton
 
 local RestoreButton = nil
-
 local function CreateRestoreButton()
     if RestoreButton and RestoreButton.Parent then
         RestoreButton.Visible = true
@@ -86,13 +87,13 @@ local function CreateRestoreButton()
 
     RestoreButton = Instance.new("TextButton")
     RestoreButton.Name = "AIRestoreButton"
-    RestoreButton.Size = UDim2.new(0, 45, 0, 45)
+    RestoreButton.Size = UDim2.new(0, 50, 0, 50)
     RestoreButton.Position = UDim2.new(0.05, 0, 0.75, 0)
-    RestoreButton.BackgroundColor3 = Color3.fromHex("#408080")
+    RestoreButton.BackgroundColor3 = MainColors.Bg
     RestoreButton.TextColor3 = MainColors.Text
     RestoreButton.Text = "AI"
-    RestoreButton.Font = Enum.Font.GothamBold
-    RestoreButton.TextSize = 16
+    RestoreButton.Font = Enum.Font.SourceSansBold
+    RestoreButton.TextSize = 18
     RestoreButton.Active = true
     RestoreButton.Draggable = true
     RestoreButton.Parent = ScreenGui
@@ -117,7 +118,7 @@ DestroyButton.MouseButton1Click:Connect(function()
 end)
 
 local OutputScroll = Instance.new("ScrollingFrame")
-OutputScroll.Size = UDim2.new(1, -20, 1, -85)
+OutputScroll.Size = UDim2.new(1, -20, 1, -95)
 OutputScroll.Position = UDim2.new(0, 10, 0, 40)
 OutputScroll.BackgroundColor3 = MainColors.Accent
 OutputScroll.BorderSizePixel = 0
@@ -127,16 +128,17 @@ OutputScroll.Parent = MainFrame
 local UIListLayout = Instance.new("UIListLayout")
 UIListLayout.Parent = OutputScroll
 UIListLayout.Padding = UDim.new(0, 4)
+UIListLayout.SortOrder = Enum.SortOrder.LayoutOrder
 
 local InputBox = Instance.new("TextBox")
-InputBox.Size = UDim2.new(1, -20, 0, 30)
-InputBox.Position = UDim2.new(0, 10, 1, -40)
+InputBox.Size = UDim2.new(1, -20, 0, 35)
+InputBox.Position = UDim2.new(0, 10, 1, -45)
 InputBox.BackgroundColor3 = MainColors.Accent
 InputBox.Text = ""
 InputBox.PlaceholderText = " Enter instruction..."
 InputBox.TextColor3 = MainColors.Text
-InputBox.Font = Enum.Font.Gotham
-InputBox.TextSize = 13
+InputBox.Font = Enum.Font.SourceSans
+InputBox.TextSize = 15
 InputBox.TextXAlignment = Enum.TextXAlignment.Left
 InputBox.ClearTextOnFocus = false
 InputBox.Parent = MainFrame
@@ -145,7 +147,10 @@ local InputCorner = Instance.new("UICorner")
 InputCorner.CornerRadius = UDim.new(0, 6)
 InputCorner.Parent = InputBox
 
-local dragging, dragInput, dragStart, startPos
+local dragging = false
+local dragStart = nil
+local startPos = nil
+
 TitleBar.InputBegan:Connect(function(input)
     if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
         dragging = true
@@ -153,32 +158,37 @@ TitleBar.InputBegan:Connect(function(input)
         startPos = MainFrame.Position
     end
 end)
-UserInputService.InputChanged:Connect(function(input)
-    if input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch then
-        dragInput = input
-    end
-    if input == dragInput and dragging then
-        local delta = input.Position - dragStart
-        MainFrame.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
-    end
-end)
-UserInputService.InputEnded:Connect(function(input)
+
+TitleBar.InputEnded:Connect(function(input)
     if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
         dragging = false
     end
 end)
 
+UserInputService.InputChanged:Connect(function(input)
+    if (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) and dragging then
+        local delta = input.Position - dragStart
+        MainFrame.Position = UDim2.new(
+            startPos.X.Scale, startPos.X.Offset + delta.X,
+            startPos.Y.Scale, startPos.Y.Offset + delta.Y
+        )
+    end
+end)
+
+local logCount = 0
 function UI.Log(text)
+    logCount = logCount + 1
     local msg = Instance.new("TextLabel")
     msg.Size = UDim2.new(1, -10, 0, 0)
     msg.AutomaticSize = Enum.AutomaticSize.Y
     msg.BackgroundTransparency = 1
-    msg.Text = "> " .. text
+    msg.Text = "> " .. tostring(text)
     msg.TextColor3 = MainColors.Text
     msg.Font = Enum.Font.Code
     msg.TextSize = 13
     msg.TextXAlignment = Enum.TextXAlignment.Left
     msg.TextWrapped = true
+    msg.LayoutOrder = logCount
     msg.Parent = OutputScroll
     
     task.defer(function()
