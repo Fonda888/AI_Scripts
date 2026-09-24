@@ -68,7 +68,7 @@ Real-Time Game State Context:
 
     local statusCode = response.StatusCode or (response.Success and 200 or 0)
     if statusCode ~= 200 and not response.Success then
-        return string.format("API HTTP Error (%s): %s", tostring(statusCode), tostring(response.Body or "No body")), nil
+        return string.format("❌️ API HTTP ERROR (%s): %s", tostring(statusCode), tostring(response.Body or "No body")), nil
     end
 
     local decodeSuccess, data = pcall(function()
