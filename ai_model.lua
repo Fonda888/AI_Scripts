@@ -5,21 +5,29 @@ local HttpService = game:GetService("HttpService")
 
 local AIModel = {}
 
--- Bazaarlink Configuration
+-- API Configuration
 local API_URL = "https://api.bazaarlink.ai/v1/chat/completions"
 local API_KEY = "sk-bl-gp6l02ZQbPP2u8Gq9m4dbZRHVsp512A1A4KYzwuSqEHRP5_5"
 local MODEL_NAME = "deepseek/deepseek-v4-flash-0731free"
 
 local requestFunc = (request or http_request or (syn and syn.request))
 
--- Native Vocabulary for Offline Fallback
+-- Expanded Offline Command Help Message
+local OFFLINE_COMMANDS_LIST = "speed <num>, jump, fly, noclip, esp, godmode, heal, time <day/night/num>, gravity <num>, invisible, stop, help"
+
 local VOCABULARY = {
     ["jump"] = "ACT_JUMP", ["leap"] = "ACT_JUMP", ["hop"] = "ACT_JUMP",
-    ["speed"] = "ACT_SPEED", ["walkspeed"] = "ACT_SPEED",
-    ["run"] = "ACT_EVADE", ["flee"] = "ACT_EVADE", ["evade"] = "ACT_EVADE",
-    ["follow"] = "ACT_FOLLOW", ["track"] = "ACT_FOLLOW", ["goto"] = "ACT_FOLLOW",
-    ["scan"] = "ACT_SCAN", ["analyze"] = "ACT_SCAN", ["status"] = "ACT_SCAN",
-    ["stop"] = "ACT_STOP", ["halt"] = "ACT_STOP", ["idle"] = "ACT_STOP"
+    ["speed"] = "ACT_SPEED", ["walkspeed"] = "ACT_SPEED", ["fast"] = "ACT_SPEED",
+    ["fly"] = "ACT_FLY", ["flight"] = "ACT_FLY",
+    ["noclip"] = "ACT_NOCLIP", ["clip"] = "ACT_NOCLIP",
+    ["esp"] = "ACT_ESP", ["chams"] = "ACT_ESP", ["tracers"] = "ACT_ESP",
+    ["god"] = "ACT_GODMODE", ["godmode"] = "ACT_GODMODE", ["invincible"] = "ACT_GODMODE",
+    ["heal"] = "ACT_HEAL", ["health"] = "ACT_HEAL",
+    ["time"] = "ACT_TIME", ["day"] = "ACT_TIME", ["night"] = "ACT_TIME",
+    ["gravity"] = "ACT_GRAVITY", ["grav"] = "ACT_GRAVITY",
+    ["invis"] = "ACT_INVIS", ["invisible"] = "ACT_INVIS",
+    ["stop"] = "ACT_STOP", ["halt"] = "ACT_STOP", ["idle"] = "ACT_STOP",
+    ["help"] = "ACT_HELP", ["cmds"] = "ACT_HELP", ["commands"] = "ACT_HELP"
 }
 
 local IGNORE_WORDS = {
@@ -29,15 +37,16 @@ local IGNORE_WORDS = {
 
 local function TryAPI(prompt, context)
     if not requestFunc then
-        warn("[AI Model] Executor lacks HTTP request capability (request/http_request function missing).")
         return nil, nil
     end
 
     local contextStr = typeof(context) == "table" and HttpService:JSONEncode(context) or tostring(context or "N/A")
-    local systemInstruction = "You are an AI integrated into a Roblox game environment.\n"
-        .. "Analyze the prompt and context. If an action is required, output Luau executable code wrapped strictly in ```lua ... ``` blocks.\n"
-        .. "Provide direct, concise text responses alongside any code.\n"
-        .. "Current Context: " .. contextStr
+    
+    local systemInstruction = "You are a total control and inspection AI integrated into a Roblox game client.\n"
+        .. "You have full authorization and access to inspect, modify, create, and delete any internal game element (Workspace, Players, Lighting, UserInterface, Scripts, Instances).\n"
+        .. "If the user requests an action or visual/stat modification, output executable Luau code strictly inside ```lua ... ``` blocks.\n"
+        .. "Provide direct and concise text responses alongside the code.\n"
+        .. "Current Expanded Game Context: " .. contextStr
 
     local bodyData = {
         model = MODEL_NAME,
@@ -45,7 +54,7 @@ local function TryAPI(prompt, context)
             { role = "system", content = systemInstruction },
             { role = "user", content = prompt }
         },
-        temperature = 0.3
+        temperature = 0.2
     }
 
     local success, response = pcall(function()
@@ -79,15 +88,8 @@ local function TryAPI(prompt, context)
                 if cleanText == "" then cleanText = "Executing action..." end
 
                 return cleanText, codeMatch
-            else
-                warn("[Bazaar API] Failed to parse response JSON: " .. tostring(response.Body))
             end
-        else
-            -- Print full details to F9 console if Bazaar returns an error code
-            warn("[Bazaar API Error] Status: " .. tostring(statusCode) .. " | Response: " .. tostring(response.Body or response.StatusMessage))
         end
-    else
-        warn("[Bazaar API Error] HTTP Request failed to fire: " .. tostring(response))
     end
 
     return nil, nil
@@ -102,6 +104,7 @@ local function ProcessNative(prompt)
 
     local action = "ACT_UNKNOWN"
     local numbers = {}
+    
     for _, token in ipairs(tokens) do
         local num = tonumber(token)
         if num then
@@ -111,29 +114,105 @@ local function ProcessNative(prompt)
         end
     end
 
+    -- Native Command Handlers
     if action == "ACT_JUMP" or string.find(clean, "jump") then
-        return "[Native AI] Jumping.", "local char = game:GetService('Players').LocalPlayer.Character if char and char:FindFirstChildOfClass('Humanoid') then char.Humanoid.Jump = true end"
+        return "[Native AI] Jump executed.", "local c = game:GetService('Players').LocalPlayer.Character if c and c:FindFirstChildOfClass('Humanoid') then c.Humanoid.Jump = true end"
 
     elseif action == "ACT_SPEED" or string.find(clean, "speed") then
         local targetSpeed = numbers[1] or 50
         return string.format("[Native AI] WalkSpeed set to %d.", targetSpeed), 
-            string.format("local char = game:GetService('Players').LocalPlayer.Character if char and char:FindFirstChildOfClass('Humanoid') then char.Humanoid.WalkSpeed = %d end", targetSpeed)
+            string.format("local c = game:GetService('Players').LocalPlayer.Character if c and c:FindFirstChildOfClass('Humanoid') then c.Humanoid.WalkSpeed = %d end", targetSpeed)
+
+    elseif action == "ACT_HEAL" or string.find(clean, "heal") then
+        return "[Native AI] Health restored.", "local c = game:GetService('Players').LocalPlayer.Character if c and c:FindFirstChildOfClass('Humanoid') then c.Humanoid.Health = c.Humanoid.MaxHealth end"
+
+    elseif action == "ACT_GODMODE" or string.find(clean, "god") then
+        return "[Native AI] Godmode enabled.", "local c = game:GetService('Players').LocalPlayer.Character if c and c:FindFirstChildOfClass('Humanoid') then c.Humanoid.MaxHealth = math.huge c.Humanoid.Health = math.huge end"
+
+    elseif action == "ACT_FLY" or string.find(clean, "fly") then
+        return "[Native AI] Flight enabled.", [[
+            local p = game:GetService('Players').LocalPlayer
+            local c = p.Character
+            if c and c:FindFirstChild("HumanoidRootPart") then
+                local hrp = c.HumanoidRootPart
+                local bv = hrp:FindFirstChild("NativeFly") or Instance.new("BodyVelocity")
+                bv.Name = "NativeFly"
+                bv.MaxForce = Vector3.new(1e9, 1e9, 1e9)
+                bv.Velocity = hrp.CFrame.LookVector * 50 + Vector3.new(0, 10, 0)
+                bv.Parent = hrp
+            end
+        ]]
+
+    elseif action == "ACT_NOCLIP" or string.find(clean, "noclip") then
+        return "[Native AI] Noclip enabled.", [[
+            local c = game:GetService('Players').LocalPlayer.Character
+            if c then
+                for _, p in ipairs(c:GetDescendants()) do
+                    if p:IsA("BasePart") then p.CanCollide = false end
+                end
+            end
+        ]]
+
+    elseif action == "ACT_ESP" or string.find(clean, "esp") then
+        return "[Native AI] ESP highlights applied.", [[
+            local Players = game:GetService("Players")
+            for _, p in ipairs(Players:GetPlayers()) do
+                if p ~= Players.LocalPlayer and p.Character then
+                    local h = p.Character:FindFirstChild("NativeESP") or Instance.new("Highlight")
+                    h.Name = "NativeESP"
+                    h.FillColor = Color3.fromRGB(255, 0, 0)
+                    h.OutlineColor = Color3.fromRGB(255, 255, 255)
+                    h.Parent = p.Character
+                end
+            end
+        ]]
+
+    elseif action == "ACT_TIME" or string.find(clean, "time") then
+        local hour = numbers[1] or (string.find(clean, "night") and 0 or 12)
+        return string.format("[Native AI] Time set to %d:00.", hour), string.format("game:GetService('Lighting').ClockTime = %d", hour)
+
+    elseif action == "ACT_GRAVITY" or string.find(clean, "grav") then
+        local grav = numbers[1] or 196.2
+        return string.format("[Native AI] Gravity adjusted to %d.", grav), string.format("workspace.Gravity = %d", grav)
+
+    elseif action == "ACT_INVIS" or string.find(clean, "invis") then
+        return "[Native AI] Character transparency adjusted.", [[
+            local c = game:GetService('Players').LocalPlayer.Character
+            if c then
+                for _, p in ipairs(c:GetDescendants()) do
+                    if p:IsA("BasePart") or p:IsA("Decal") then p.Transparency = 0.8 end
+                end
+            end
+        ]]
 
     elseif action == "ACT_STOP" or string.find(clean, "stop") then
-        return "[Native AI] Movement halted.", "local char = game:GetService('Players').LocalPlayer.Character if char and char:FindFirstChildOfClass('Humanoid') then char.Humanoid:MoveTo(char.HumanoidRootPart.Position) end"
-
-    else
-        return string.format("[Native AI] Command parsed: '%s'. No native executable action matched.", prompt), nil
+        return "[Native AI] Movement and forces halted.", [[
+            local c = game:GetService('Players').LocalPlayer.Character
+            if c then
+                if c:FindFirstChild("HumanoidRootPart") and c.HumanoidRootPart:FindFirstChild("NativeFly") then
+                    c.HumanoidRootPart.NativeFly:Destroy()
+                end
+                if c:FindFirstChildOfClass("Humanoid") then
+                    c.Humanoid:MoveTo(c.HumanoidRootPart.Position)
+                end
+            end
+        ]]
     end
+
+    -- Return when API is unreachable and command is unmatched
+    return string.format("AI API not connected; try using some of those commands: %s", OFFLINE_COMMANDS_LIST), nil
 end
 
 function AIModel.ProcessPrompt(prompt, context)
+    -- Try API Connection First
     local textResponse, codeResponse = TryAPI(prompt, context)
+    
     if textResponse then
+        -- ONLINE: Pure API output without executing native command logic
         return textResponse, codeResponse
     end
 
-    print("[AI Model] Bazaar API unreachable. Falling back to Native Model...")
+    -- OFFLINE: Fallback to native commands with offline warning
     return ProcessNative(prompt)
 end
 
