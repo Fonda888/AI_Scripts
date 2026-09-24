@@ -2,20 +2,20 @@
 -- AI MODEL MODULE
 -- ========================================================
 local HttpService = game:GetService("HttpService")
-local Players = game:GetService("Players")
-local Workspace = game:GetService("Workspace")
-local PathfindingService = game:GetService("PathfindingService")
 
 local AIModel = {}
+
+-- Bazaarlink Configuration
 local API_URL = "https://api.bazaarlink.ai/v1/chat/completions"
 local API_KEY = "sk-bl-gp6l02ZQbPP2u8Gq9m4dbZRHVsp512A1A4KYzwuSqEHRP5_5"
+local MODEL_NAME = "deepseek/deepseek-v4-flash-0731free"
+
 local requestFunc = (request or http_request or (syn and syn.request))
 
 -- Native Vocabulary for Offline Fallback
 local VOCABULARY = {
     ["jump"] = "ACT_JUMP", ["leap"] = "ACT_JUMP", ["hop"] = "ACT_JUMP",
     ["speed"] = "ACT_SPEED", ["walkspeed"] = "ACT_SPEED",
-    ["fly"] = "ACT_FLY",
     ["run"] = "ACT_EVADE", ["flee"] = "ACT_EVADE", ["evade"] = "ACT_EVADE",
     ["follow"] = "ACT_FOLLOW", ["track"] = "ACT_FOLLOW", ["goto"] = "ACT_FOLLOW",
     ["scan"] = "ACT_SCAN", ["analyze"] = "ACT_SCAN", ["status"] = "ACT_SCAN",
@@ -27,11 +27,11 @@ local IGNORE_WORDS = {
     ["is"]=true, ["are"]=true, ["please"]=true, ["can"]=true, ["you"]=true, ["me"]=true, ["my"]=true, ["set"]=true, ["make"]=true
 }
 
--- ========================================================
--- EXTERNAL API PROCESSOR
--- ========================================================
 local function TryAPI(prompt, context)
-    if not requestFunc then return nil, nil end
+    if not requestFunc then
+        warn("[AI Model] Executor lacks HTTP request capability (request/http_request function missing).")
+        return nil, nil
+    end
 
     local contextStr = typeof(context) == "table" and HttpService:JSONEncode(context) or tostring(context or "N/A")
     local systemInstruction = "You are an AI integrated into a Roblox game environment.\n"
@@ -40,7 +40,7 @@ local function TryAPI(prompt, context)
         .. "Current Context: " .. contextStr
 
     local bodyData = {
-        model = "gpt-3.5-turbo",
+        model = MODEL_NAME,
         messages = {
             { role = "system", content = systemInstruction },
             { role = "user", content = prompt }
@@ -60,32 +60,39 @@ local function TryAPI(prompt, context)
         })
     end)
 
-    if success and response and (response.StatusCode == 200 or response.Success) then
-        local decodeSuccess, data = pcall(function()
-            return HttpService:JSONDecode(response.Body)
-        end)
+    if success and response then
+        local statusCode = response.StatusCode or (response.Success and 200 or 0)
+        
+        if statusCode == 200 or response.Success then
+            local decodeSuccess, data = pcall(function()
+                return HttpService:JSONDecode(response.Body)
+            end)
 
-        if decodeSuccess and data and data.choices and data.choices[1] and data.choices[1].message then
-            local content = data.choices[1].message.content or ""
-            
-            -- Extract code blocks if present
-            local codeMatch = string.match(content, "```lua\n(.-)\n```") 
-                or string.match(content, "```luau\n(.-)\n```") 
-                or string.match(content, "```(.-)```")
+            if decodeSuccess and data and data.choices and data.choices[1] and data.choices[1].message then
+                local content = data.choices[1].message.content or ""
+                
+                local codeMatch = string.match(content, "```lua\n(.-)\n```") 
+                    or string.match(content, "```luau\n(.-)\n```") 
+                    or string.match(content, "```(.-)```")
 
-            local cleanText = content:gsub("```lua%s*(.-)%s*```", ""):gsub("```%s*(.-)%s*```", ""):match("^%s*(.-)%s*$")
-            if cleanText == "" then cleanText = "Executing action..." end
+                local cleanText = content:gsub("```lua%s*(.-)%s*```", ""):gsub("```%s*(.-)%s*```", ""):match("^%s*(.-)%s*$")
+                if cleanText == "" then cleanText = "Executing action..." end
 
-            return cleanText, codeMatch
+                return cleanText, codeMatch
+            else
+                warn("[Bazaar API] Failed to parse response JSON: " .. tostring(response.Body))
+            end
+        else
+            -- Print full details to F9 console if Bazaar returns an error code
+            warn("[Bazaar API Error] Status: " .. tostring(statusCode) .. " | Response: " .. tostring(response.Body or response.StatusMessage))
         end
+    else
+        warn("[Bazaar API Error] HTTP Request failed to fire: " .. tostring(response))
     end
 
     return nil, nil
 end
 
--- ========================================================
--- NATIVE OFFLINE PROCESSOR
--- ========================================================
 local function ProcessNative(prompt)
     local tokens = {}
     local clean = string.lower(prompt):gsub("[%p%c]", "")
@@ -120,18 +127,13 @@ local function ProcessNative(prompt)
     end
 end
 
--- ========================================================
--- MAIN EXPORT FUNCTION
--- ========================================================
 function AIModel.ProcessPrompt(prompt, context)
-    -- Step 1: Attempt External API
     local textResponse, codeResponse = TryAPI(prompt, context)
     if textResponse then
         return textResponse, codeResponse
     end
 
-    -- Step 2: Fallback to Native Local Model
-    print("[AI Model] External API unreachable. Operating on Native Model...")
+    print("[AI Model] Bazaar API unreachable. Falling back to Native Model...")
     return ProcessNative(prompt)
 end
 
