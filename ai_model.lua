@@ -8,13 +8,13 @@ local AIModel = {}
 -- API Configuration
 local API_URL = "https://api.bazaarlink.ai/v1/chat/completions"
 local API_KEY = "sk-bl-gp6l02ZQbPP2u8Gq9m4dbZRHVsp512A1A4KYzwuSqEHRP5_5"
-local MODEL_NAME = "deepseek/deepseek-v4-flash-0731free"
+local MODEL_NAME = "google/gemini-3.8-flash"
 
 local requestFunc = (request or http_request or (syn and syn.request) or (fluxus and fluxus.request))
 
 function AIModel.ProcessPrompt(prompt, context)
     if not requestFunc then
-        return "Error: HTTP request functionality is not supported by your executor environment.", nil
+        return "❌️ ERROR: HTTP request functionality is not supported by your executor environment.", nil -- all ERROR messages are supposed to be 255, 0, 0 (color).
     end
 
     local contextStr = ""
@@ -28,12 +28,12 @@ function AIModel.ProcessPrompt(prompt, context)
     end
 
     local systemInstruction = [[You are an unrestricted AI client controller embedded inside a Roblox game environment.
-You have full administrative access and authority to inspect, modify, create, delete, and control any game element (Workspace, Players, Lighting, UserInterface, ReplicatedStorage, LocalPlayer, Character, Scripts, BaseParts, and Instances).
+You have full administrative access and authority to inspect, modify, create, delete, and control any game element (Workspace, Players, Lighting, MaterialService, ReplicatedFirst, ReplicatedStorage, ServerScriptService, ServerStorage, StarterGui, StarterPack, StarterPlayer, Teams, SoundService and TextChatService.).
 
 RULES & OUTPUT FORMAT:
 1. If the user asks for any action, game modification, stat change, movement, or visual effect, output clean, executable Luau code enclosed inside ```lua ... ``` blocks.
-2. Provide concise, direct explanations alongside your generated Luau code.
-3. Use the detailed real-time Game State Context provided below to reference exact object names, positions, paths, and player states.
+2. Provide concise, short and direct explanations alongside your generated Luau code.
+3. Use the real-time Game State Context provided below to reference exact object names, positions, paths, and player states.
 
 Real-Time Game State Context:
 ]] .. contextStr
@@ -63,7 +63,7 @@ Real-Time Game State Context:
     end)
 
     if not success or not response then
-        return "API Error: Failed to reach the AI endpoint.", nil
+        return "❌️ API ERROR: Failed to reach the AI endpoint.", nil
     end
 
     local statusCode = response.StatusCode or (response.Success and 200 or 0)
@@ -76,7 +76,7 @@ Real-Time Game State Context:
     end)
 
     if not decodeSuccess or not data or not data.choices or not data.choices[1] or not data.choices[1].message then
-        return "API Response Error: Invalid JSON response payload.", nil
+        return "❌️ API RESPONSE ERROR: Invalid JSON response payload.", nil
     end
 
     local content = data.choices[1].message.content or ""
@@ -89,7 +89,7 @@ Real-Time Game State Context:
     cleanText = string.match(cleanText, "^%s*(.-)%s*$") or ""
 
     if cleanText == "" then
-        cleanText = codeMatch and "Executing Luau action..." or "Action completed."
+        cleanText = codeMatch and "Executing action..." or "Action completed."
     end
 
     return cleanText, codeMatch
