@@ -35,27 +35,32 @@ local Env = fetch("environment_controller.lua")
 local Web = fetch("web_scraper.lua")
 local AI = fetch("ai_model.lua")
 
-UI.Log("Modules loaded successfully. Core systems online.")
+UI.Log("Core systems operational. Operating pure API mode with full vision.")
 
 UI.OnInput(function(prompt)
     UI.Log("User: " .. prompt)
     local lowerPrompt = string.lower(prompt)
     
     if string.find(lowerPrompt, "search") or string.find(lowerPrompt, "lookup") then
-        UI.Log("Initiating web search...")
-        local result = Web.Search(prompt)
-        UI.Log("Web: " .. tostring(result))
+        task.spawn(function()
+            UI.Log("Searching web...")
+            local result = Web.Search(prompt)
+            UI.Log("Web Result: " .. tostring(result))
+        end)
     else
-        UI.Log("Analyzing environment and prompt...")
+        UI.Log("Analyzing full game state & querying AI...")
         task.spawn(function()
             local context = Env.GetGameState()
             local aiResponse, actionCode = AI.ProcessPrompt(prompt, context)
             
             UI.Log("AI: " .. tostring(aiResponse))
-            if actionCode then
+            if actionCode and actionCode ~= "" then
+                UI.Log("Executing generated code...")
                 local success, err = Env.Execute(actionCode)
                 if not success then
                     UI.Log("Execution Error: " .. tostring(err))
+                else
+                    UI.Log("Execution Successful.")
                 end
             end
         end)
