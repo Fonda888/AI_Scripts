@@ -4,7 +4,6 @@
 local HttpService = game:GetService("HttpService")
 local Web = {}
 
--- Added broader executor support (e.g., fluxus) to match the new AI module
 local requestFunc = (request or http_request or (syn and syn.request) or (fluxus and fluxus.request))
 
 function Web.Search(query)
@@ -12,7 +11,6 @@ function Web.Search(query)
         return "Web search blocked: Executor lacks HTTP request capability."
     end
     
-    -- Smarter query cleaning to improve API hit rates
     local lowerQuery = string.lower(query)
     local cleanQuery = lowerQuery:gsub("search the web for", "")
                                  :gsub("search web for", "")
@@ -22,10 +20,8 @@ function Web.Search(query)
                                  :gsub("who is", "")
                                  :gsub("what is", "")
     
-    -- Trim leading and trailing whitespace
     cleanQuery = string.match(cleanQuery, "^%s*(.-)%s*$")
     
-    -- Fallback if the entire prompt was just trigger words
     if not cleanQuery or cleanQuery == "" then
         cleanQuery = query
     end
@@ -48,12 +44,12 @@ function Web.Search(query)
             elseif data.RelatedTopics and #data.RelatedTopics > 0 and data.RelatedTopics[1].Text then
                 return data.RelatedTopics[1].Text
             else
-                return "No direct web summary found for: '" .. cleanQuery .. "'. Try using more specific keywords."
+                return "No direct web summary found for: '" .. cleanQuery .. "'."
             end
         end
     end
 
-    return "Failed to establish a secure web connection or the API is currently unavailable."
+    return "Failed to establish a secure web connection."
 end
 
 return Web
