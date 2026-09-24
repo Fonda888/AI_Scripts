@@ -4,7 +4,8 @@
 local REPO_URL = "https://raw.githubusercontent.com/Fonda888/AI_Scripts/main/"
 
 local function fetch(fileName)
-    local url = REPO_URL .. fileName
+    -- Appending a timestamp bypasses executor URL caching
+    local url = REPO_URL .. fileName .. "?t=" .. tostring(os.time())
     local content = nil
     
     local success, err = pcall(function()
@@ -35,7 +36,7 @@ local Env = fetch("environment_controller.lua")
 local Web = fetch("web_scraper.lua")
 local AI = fetch("ai_model.lua")
 
-UI.Log("Core systems operational. Operating pure API mode with full vision.")
+UI.Log("Core systems operational.")
 
 UI.OnInput(function(prompt)
     UI.Log("User: " .. prompt)
