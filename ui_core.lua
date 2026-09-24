@@ -8,8 +8,8 @@ local LocalPlayer = Players.LocalPlayer
 
 local UI = {}
 local MainColors = {
-    Bg = Color3.fromHex("#808080"),
-    Accent = Color3.fromHex("#408080"),
+    Bg = Color3.fromHex("#408080"),
+    Accent = Color3.fromHex("#404040"),
     Text = Color3.fromRGB(255, 255, 255)
 }
 
