@@ -81,12 +81,10 @@ Real-Time Game State Context:
 
     local content = data.choices[1].message.content or ""
 
-    -- Pattern matching for Luau code extraction
     local codeMatch = string.match(content, "```lua%s*(.-)%s*```") 
         or string.match(content, "```luau%s*(.-)%s*```") 
         or string.match(content, "```%s*(.-)%s*```")
 
-    -- Clean conversation text
     local cleanText = content:gsub("```%w*%s*.-%s*```", "")
     cleanText = string.match(cleanText, "^%s*(.-)%s*$") or ""
 
