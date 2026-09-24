@@ -13,14 +13,12 @@ local MainColors = {
     Text = Color3.fromRGB(255, 255, 255)
 }
 
--- ScreenGui Setup
 local ScreenGui = Instance.new("ScreenGui")
 ScreenGui.Name = "AI_Hub_Runtime"
 ScreenGui.ResetOnSpawn = false
 pcall(function() ScreenGui.Parent = CoreGui end)
 if not ScreenGui.Parent then ScreenGui.Parent = LocalPlayer:WaitForChild("PlayerGui") end
 
--- Main Frame
 local MainFrame = Instance.new("Frame")
 MainFrame.Size = UDim2.new(0, 450, 0, 320)
 MainFrame.Position = UDim2.new(0.5, -225, 0.5, -160)
@@ -33,7 +31,6 @@ local UICorner = Instance.new("UICorner")
 UICorner.CornerRadius = UDim.new(0, 8)
 UICorner.Parent = MainFrame
 
--- Title Bar
 local TitleBar = Instance.new("TextLabel")
 TitleBar.Size = UDim2.new(1, 0, 0, 30)
 TitleBar.BackgroundColor3 = MainColors.Accent
@@ -49,7 +46,6 @@ local TitleCorner = Instance.new("UICorner")
 TitleCorner.CornerRadius = UDim.new(0, 8)
 TitleCorner.Parent = TitleBar
 
--- Minimize Button (-)
 local MinimizeButton = Instance.new("TextButton")
 MinimizeButton.Name = "MinimizeButton"
 MinimizeButton.Size = UDim2.new(0, 25, 0, 22)
@@ -65,12 +61,11 @@ local MinCorner = Instance.new("UICorner")
 MinCorner.CornerRadius = UDim.new(0, 4)
 MinCorner.Parent = MinimizeButton
 
--- Destroy Button (X)
 local DestroyButton = Instance.new("TextButton")
 DestroyButton.Name = "DestroyButton"
 DestroyButton.Size = UDim2.new(0, 25, 0, 22)
 DestroyButton.Position = UDim2.new(1, -28, 0, 4)
-DestroyButton.BackgroundColor3 = Color3.fromRGB(180, 40, 40)
+DestroyButton.BackgroundColor3 = Color3.fromHEX(#804040)
 DestroyButton.TextColor3 = MainColors.Text
 DestroyButton.Text = "X"
 DestroyButton.Font = Enum.Font.GothamBold
@@ -81,7 +76,6 @@ local DestroyCorner = Instance.new("UICorner")
 DestroyCorner.CornerRadius = UDim.new(0, 4)
 DestroyCorner.Parent = DestroyButton
 
--- Restore Button Setup
 local RestoreButton = nil
 
 local function CreateRestoreButton()
@@ -119,11 +113,9 @@ MinimizeButton.MouseButton1Click:Connect(function()
 end)
 
 DestroyButton.MouseButton1Click:Connect(function()
-    print("[AI Runtime Core] Interface destroyed successfully.")
     ScreenGui:Destroy()
 end)
 
--- Console Output
 local OutputScroll = Instance.new("ScrollingFrame")
 OutputScroll.Size = UDim2.new(1, -20, 1, -85)
 OutputScroll.Position = UDim2.new(0, 10, 0, 40)
@@ -136,7 +128,6 @@ local UIListLayout = Instance.new("UIListLayout")
 UIListLayout.Parent = OutputScroll
 UIListLayout.Padding = UDim.new(0, 4)
 
--- Input Box
 local InputBox = Instance.new("TextBox")
 InputBox.Size = UDim2.new(1, -20, 0, 30)
 InputBox.Position = UDim2.new(0, 10, 1, -40)
@@ -154,7 +145,6 @@ local InputCorner = Instance.new("UICorner")
 InputCorner.CornerRadius = UDim.new(0, 6)
 InputCorner.Parent = InputBox
 
--- PC & Mobile Dragging
 local dragging, dragInput, dragStart, startPos
 TitleBar.InputBegan:Connect(function(input)
     if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
@@ -191,9 +181,10 @@ function UI.Log(text)
     msg.TextWrapped = true
     msg.Parent = OutputScroll
     
-    task.wait()
-    OutputScroll.CanvasSize = UDim2.new(0, 0, 0, UIListLayout.AbsoluteContentSize.Y + 10)
-    OutputScroll.CanvasPosition = Vector2.new(0, OutputScroll.CanvasSize.Y.Offset)
+    task.defer(function()
+        OutputScroll.CanvasSize = UDim2.new(0, 0, 0, UIListLayout.AbsoluteContentSize.Y + 10)
+        OutputScroll.CanvasPosition = Vector2.new(0, OutputScroll.CanvasSize.Y.Offset)
+    end)
 end
 
 function UI.OnInput(callback)
