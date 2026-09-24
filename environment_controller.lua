@@ -28,7 +28,6 @@ function EnvironmentController.GetGameState()
     local hrp = char and char:FindFirstChild("HumanoidRootPart")
     local humanoid = char and char:FindFirstChildOfClass("Humanoid")
 
-    -- 1. Detailed Local Player Info
     local playerState = {
         Name = LocalPlayer.Name,
         DisplayName = LocalPlayer.DisplayName,
@@ -54,7 +53,6 @@ function EnvironmentController.GetGameState()
         end
     end
 
-    -- 2. Mouse Target & Raycast Inspection
     local mouseTargetInfo = { Target = "None" }
     if mouse and mouse.Target then
         local t = mouse.Target
@@ -97,7 +95,6 @@ function EnvironmentController.GetGameState()
         end
     end
 
-    -- 3. World & Lighting
     local worldState = {
         Gravity = Workspace.Gravity,
         FallenPartsDestroyHeight = Workspace.FallenPartsDestroyHeight,
@@ -110,7 +107,6 @@ function EnvironmentController.GetGameState()
         OutdoorAmbient = tostring(Lighting.OutdoorAmbient)
     }
 
-    -- 4. Workspace Top-Level Instance Tree Summary
     local workspaceTree = {}
     for _, item in ipairs(Workspace:GetChildren()) do
         if item ~= camera and item ~= char then
@@ -119,7 +115,6 @@ function EnvironmentController.GetGameState()
         end
     end
 
-    -- 5. Nearby Players & Entities
     local nearbyEntities = {}
     local myPos = hrp and hrp.Position or Vector3.zero
     for _, p in ipairs(Players:GetPlayers()) do
@@ -141,7 +136,6 @@ function EnvironmentController.GetGameState()
         end
     end
 
-    -- 6. Inventory Items
     local inventory = {}
     local backpack = LocalPlayer:FindFirstChildOfClass("Backpack")
     if backpack then
@@ -150,7 +144,6 @@ function EnvironmentController.GetGameState()
         end
     end
 
-    -- 7. Active UI Elements
     local activeUI = {}
     local playerGui = LocalPlayer:FindFirstChildOfClass("PlayerGui")
     if playerGui then
@@ -161,7 +154,6 @@ function EnvironmentController.GetGameState()
         end
     end
 
-    -- 8. ReplicatedStorage Structure Overview
     local replicatedStorageItems = {}
     for _, item in ipairs(ReplicatedStorage:GetChildren()) do
         table.insert(replicatedStorageItems, { Name = item.Name, Class = item.ClassName })
@@ -191,7 +183,6 @@ function EnvironmentController.Execute(codeString)
         return true, nil 
     end
 
-    -- Clean code markup
     local cleanCode = codeString:gsub("^```%w*%s*", ""):gsub("%s*```$", "")
 
     local compiledFunc, compileErr = loadstring(cleanCode)
