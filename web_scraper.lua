@@ -10,10 +10,16 @@ function Web.Search(query)
         return "Web search blocked: Executor lacks HTTP request capability."
     end
     
-    -- Extract the search term from phrases like "search web for X"
-    local cleanQuery = string.gsub(query, "search web", "")
+    local lowerQuery = string.lower(query)
+    local cleanQuery = string.gsub(lowerQuery, "search web for", "")
+    cleanQuery = string.gsub(cleanQuery, "search web", "")
     cleanQuery = string.gsub(cleanQuery, "search", "")
-    cleanQuery = string.match(cleanQuery, "^%s*(.-)%s*$") -- Trim whitespace
+    cleanQuery = string.gsub(cleanQuery, "lookup", "")
+    cleanQuery = string.match(cleanQuery, "^%s*(.-)%s*$")
+    
+    if not cleanQuery or cleanQuery == "" then
+        cleanQuery = query
+    end
     
     local safeQuery = HttpService:UrlEncode(cleanQuery)
     local url = "https://api.duckduckgo.com/?q=" .. safeQuery .. "&format=json"
@@ -22,18 +28,23 @@ function Web.Search(query)
         return requestFunc({Url = url, Method = "GET"})
     end)
     
-    if success and response.StatusCode == 200 then
-        local data = HttpService:JSONDecode(response.Body)
-        if data.AbstractText and data.AbstractText ~= "" then
-            return data.AbstractText
-        elseif data.RelatedTopics and #data.RelatedTopics > 0 and data.RelatedTopics[1].Text then
-            return data.RelatedTopics[1].Text
-        else
-            return "No abstract found for this query."
+    if success and response and (response.StatusCode == 200 or response.Success) then
+        local decodeSuccess, data = pcall(function()
+            return HttpService:JSONDecode(response.Body)
+        end)
+        
+        if decodeSuccess and data then
+            if data.AbstractText and data.AbstractText ~= "" then
+                return data.AbstractText
+            elseif data.RelatedTopics and #data.RelatedTopics > 0 and data.RelatedTopics[1].Text then
+                return data.RelatedTopics[1].Text
+            else
+                return "No abstract found for: " .. cleanQuery
+            end
         end
-    else
-        return "Failed to establish secure web connection."
     end
+
+    return "Failed to establish secure web connection."
 end
 
 return Web
