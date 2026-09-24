@@ -29,27 +29,26 @@ local function fetch(fileName)
     return compiledFunc()
 end
 
-print("[AI Hub] Loading core modules...")
+print("Loading modules, please wait...")
 
 local UI = fetch("ui_core.lua")
 local Env = fetch("environment_controller.lua")
 local Web = fetch("web_scraper.lua")
 local AI = fetch("ai_model.lua")
 
-UI.Log("Core systems operational.")
+UI.Log("All modules loaded. AI ready.")
+
+UI.Log("⚠️ WARNING: Use the AI for exploiting at your own risk.")
+UI.Log TextColor3.fromRGB("255, 128, 0")
+
+UI.Log("ℹ️ INFO: There is a daily limit of use.")
+UI.Log TextColor3.fromRGB("0, 128, 255")
 
 UI.OnInput(function(prompt)
-    UI.Log("User: " .. prompt)
+    UI.Log("YOU: " .. prompt)
     local lowerPrompt = string.lower(prompt)
     
-    if string.find(lowerPrompt, "search") or string.find(lowerPrompt, "lookup") then
-        task.spawn(function()
-            UI.Log("Searching web...")
-            local result = Web.Search(prompt)
-            UI.Log("Web Result: " .. tostring(result))
-        end)
-    else
-        UI.Log("Analyzing full game state & querying AI...")
+        UI.Log("Analyzing instruction...")
         task.spawn(function()
             local context = Env.GetGameState()
             local aiResponse, actionCode = AI.ProcessPrompt(prompt, context)
@@ -59,9 +58,10 @@ UI.OnInput(function(prompt)
                 UI.Log("Executing generated code...")
                 local success, err = Env.Execute(actionCode)
                 if not success then
-                    UI.Log("Execution Error: " .. tostring(err))
+                    UI.Log("❌️ EXECUTION ERROR: " .. tostring(err))
+                    UI.Log TextColor3.fromRGB("255, 0, 0")
                 else
-                    UI.Log("Execution Successful.")
+                    UI.Log("Executed successfully.")
                 end
             end
         end)
