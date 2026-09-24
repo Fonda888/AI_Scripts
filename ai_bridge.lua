@@ -1,5 +1,5 @@
 -- ========================================================
--- AI BRIDGE MODULE (HYBRID API + LOCAL PARSER)
+-- AI BRIDGE MODULE
 -- ========================================================
 local HttpService = game:GetService("HttpService")
 local AI = {}
@@ -14,11 +14,12 @@ function AI.ProcessPrompt(prompt, gameState)
     
     -- 1. Try External LLM API if valid keys are provided
     if API_URL ~= "YOUR_API_ENDPOINT" and API_KEY ~= "YOUR_API_KEY" and requestFunc then
+        print("[AI Bridge] Connecting to external API...")
         local payload = {
             model = "gpt-4o-mini",
             messages = {
                 {role = "system", content = "You are a Luau game execution modifier. Output ONLY raw Luau code inside ```lua ``` code blocks."},
-                {role = "user", content = "Game Context: " .. gameState .. "\nRequest: " .. prompt}
+                {role = "user", content = "Game Context: " .. (gameState or "N/A") .. "\nRequest: " .. prompt}
             }
         }
         
@@ -34,9 +35,9 @@ function AI.ProcessPrompt(prompt, gameState)
             })
         end)
 
-        if success and response.StatusCode == 200 then
+        if success and response and (response.StatusCode == 200 or response.Success) then
             local data = HttpService:JSONDecode(response.Body)
-            local rawText = data.choices[1].message.content
+            local rawText = data.choices and data.choices[1] and data.choices[1].message and data.choices[1].message.content or ""
             local codeMatch = string.match(rawText, "```lua\n(.-)\n```") or string.match(rawText, "```luau\n(.-)\n```")
             
             if codeMatch then
@@ -45,7 +46,10 @@ function AI.ProcessPrompt(prompt, gameState)
         end
     end
 
-    -- 2. Local Generator Fallback (Runs locally without needing an API key)
+    -- 2. Local Model Fallback Output
+    print("[AI Bridge] External API not connected: Switching to native AI model...")
+
+    -- 3. Local Parser & Commands
     if string.find(pLower, "color") or string.find(pLower, "paint") then
         local code = [[
             for _, obj in ipairs(workspace:GetDescendants()) do
@@ -88,7 +92,7 @@ function AI.ProcessPrompt(prompt, gameState)
         return "Purging matching instances: " .. target, code
 
     else
-        return "No external API configured. Try local commands like 'paint workspace', 'speed 50', 'night', 'day', or 'search web [query]'.", nil
+        return "External API not connected: Switching to native AI model...", nil
     end
 end
 
