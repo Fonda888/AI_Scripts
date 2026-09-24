@@ -18,12 +18,12 @@ local function fetch(fileName)
     end)
 
     if not success or not content or content == "" then 
-        error("❌️ LOADING ERROR: Failed to load module: " .. fileName .. (err and (" | ERROR: " .. tostring(err)) or ""))
+        error("LOADING ERROR: Failed to load module: " .. fileName .. (err and (" | ERROR: " .. tostring(err)) or ""))
     end
     
     local compiledFunc, compileErr = loadstring(content)
     if not compiledFunc then
-        error("❌️ LOADING ERROR: Failed to compile module: " .. fileName .. " | " .. tostring(compileErr))
+        error("LOADING ERROR: Failed to compile module: " .. fileName .. " | " .. tostring(compileErr))
     end
 
     return compiledFunc()
@@ -37,32 +37,31 @@ local AI = fetch("ai_model.lua")
 
 UI.Log("All modules loaded. AI ready.")
 
-UI.Log("⚠️ WARNING: Use the AI for exploiting at your own risk.")
-UI.Log.TextColor = Color3.fromRGB("255, 128, 0")
-
-UI.Log("ℹ️ INFO: There is a daily limit of use.")
-UI.Log.TextColor = Color3.fromRGB("0, 128, 255")
+UI.Log("⚠️ WARNING: Use the AI for exploiting at your own risk.", Color3.fromRGB(255, 128, 0))
+UI.Log("ℹ️ INFO: There is a daily limit of use.", Color3.fromRGB(0, 128, 255))
 
 UI.OnInput(function(prompt)
     UI.Log("YOU: " .. prompt)
-    local lowerPrompt = string.lower(prompt)
     
-        UI.Log("Analyzing instruction...")
-        task.spawn(function()
-            local context = Env.GetGameState()
-            local aiResponse, actionCode = AI.ProcessPrompt(prompt, context)
-            
+    UI.Log("Analyzing instruction...")
+    task.spawn(function()
+        local context = Env.GetGameState()
+        local aiResponse, actionCode = AI.ProcessPrompt(prompt, context)
+        
+        if string.find(aiResponse, "❌") then
+            UI.Log(tostring(aiResponse), Color3.fromRGB(255, 0, 0))
+        else
             UI.Log("AI: " .. tostring(aiResponse))
-            if actionCode and actionCode ~= "" then
-                UI.Log("Executing generated code...")
-                local success, err = Env.Execute(actionCode)
-                if not success then
-                    UI.Log("❌️ EXECUTION ERROR: " .. tostring(err))
-                    UI.Log.TextColor = Color3.fromRGB("255, 0, 0")
-                else
-                    UI.Log("Executed successfully.")
-                end
+        end
+        
+        if actionCode and actionCode ~= "" then
+            UI.Log("Executing generated code...")
+            local success, err = Env.Execute(actionCode)
+            if not success then
+                UI.Log("❌️ EXECUTION ERROR: " .. tostring(err), Color3.fromRGB(255, 0, 0))
+            else
+                UI.Log("Executed successfully.")
             end
-        end)
-    end
+        end
+    end)
 end)
