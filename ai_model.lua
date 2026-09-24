@@ -14,7 +14,7 @@ local requestFunc = (request or http_request or (syn and syn.request) or (fluxus
 
 function AIModel.ProcessPrompt(prompt, context)
     if not requestFunc then
-        return "❌️ ERROR: HTTP request functionality is not supported by your executor environment.", nil -- all ERROR messages are supposed to be 255, 0, 0 (color).
+        return "❌️ ERROR: HTTP request functionality is not supported by your executor environment.", nil 
     end
 
     local contextStr = ""
