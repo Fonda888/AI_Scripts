@@ -264,6 +264,30 @@ local ClearBtn = createActionBtn("Clear cache", 110)
 local RejoinBtn = createActionBtn("Rejoin", 140)
 local HopBtn = createActionBtn("Server hop", 170)
 
+-- Settings Footer Labels
+local MadeByLabel = Instance.new("TextLabel")
+MadeByLabel.Size = UDim2.new(0, 150, 0, 20)
+MadeByLabel.Position = UDim2.new(0, 10, 1, -22)
+MadeByLabel.BackgroundTransparency = 1
+MadeByLabel.RichText = true
+MadeByLabel.Text = "<i>Made by <b>Fonda888</b></i>"
+MadeByLabel.TextColor3 = Color3.fromRGB(128, 128, 128)
+MadeByLabel.Font = Enum.Font.SourceSans
+MadeByLabel.TextSize = 13
+MadeByLabel.TextXAlignment = Enum.TextXAlignment.Left
+MadeByLabel.Parent = SettingsFrame
+
+local VersionLabel = Instance.new("TextLabel")
+VersionLabel.Size = UDim2.new(0, 150, 0, 20)
+VersionLabel.Position = UDim2.new(1, -160, 1, -22)
+VersionLabel.BackgroundTransparency = 1
+VersionLabel.Text = "v0.8 (BETA)"
+VersionLabel.TextColor3 = Color3.fromRGB(128, 128, 128)
+VersionLabel.Font = Enum.Font.SourceSans
+VersionLabel.TextSize = 13
+VersionLabel.TextXAlignment = Enum.TextXAlignment.Right
+VersionLabel.Parent = SettingsFrame
+
 SettingsBtn.MouseButton1Click:Connect(function()
     SettingsFrame.Visible = not SettingsFrame.Visible
     OutputScroll.Visible = not SettingsFrame.Visible
