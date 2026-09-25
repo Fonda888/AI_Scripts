@@ -40,7 +40,7 @@ local AI = fetch("ai_model.lua")
 
 UI.Log("All modules loaded. AI system ready.", Color3.fromRGB(0, 255, 128))
 UI.Log("<b>⚠️ WARNING:</b> Use the AI for exploiting at your own risk.", Color3.fromRGB(255, 128, 0))
-UI.Log("<b>ℹ️ INFO:</b> Daily limit applies per API tier.", Color3.fromRGB(0, 128, 255))
+UI.Log("<b>ℹ️ INFO:</b> There is a daily limit of use.", Color3.fromRGB(0, 128, 255))
 
 UI.OnInput(function(prompt)
     UI.Log("<b>USER:</b> " .. prompt)
