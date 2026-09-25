@@ -190,7 +190,7 @@ SettingsBtn.TextSize = 18
 SettingsBtn.Parent = MainFrame
 
 local SettingsBtnCorner = Instance.new("UICorner")
-SettingsBtnCorner.CornerRadius = UDim.new(0, 1)
+SettingsBtnCorner.CornerRadius = UDim.new(0.5, 0)
 SettingsBtnCorner.Parent = SettingsBtn
 
 local SettingsFrame = Instance.new("Frame")
