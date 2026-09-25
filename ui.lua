@@ -151,7 +151,7 @@ OutputScroll.Parent = MainFrame
 
 local UIListLayout = Instance.new("UIListLayout")
 UIListLayout.Parent = OutputScroll
-UIListLayout.Padding = UDim.new(0, 14)
+UIListLayout.Padding = UDim.new(0, 16)
 UIListLayout.SortOrder = Enum.SortOrder.LayoutOrder
 
 local InputBox = Instance.new("TextBox")
@@ -190,7 +190,7 @@ SettingsBtn.TextSize = 18
 SettingsBtn.Parent = MainFrame
 
 local SettingsBtnCorner = Instance.new("UICorner")
-SettingsBtnCorner.CornerRadius = UDim.new(0, 6)
+SettingsBtnCorner.CornerRadius = UDim.new(0, 0)
 SettingsBtnCorner.Parent = SettingsBtn
 
 local SettingsFrame = Instance.new("Frame")
@@ -298,8 +298,8 @@ AddColorBtn(Color3.fromRGB(128, 128, 64))
 CreateHeader("Others", 3)
 
 local btnClear = CreateButton("Clear cache", 4)
-local btnRejoin = CreateButton("Rejoin", 5)
-local btnHop = CreateButton("Server hop", 6)
+local btnRejoin = CreateButton("Rejoin server", 5)
+local btnHop = CreateButton("Switch server", 6)
 
 btnClear.MouseButton1Click:Connect(function()
 end)
@@ -326,7 +326,6 @@ local FooterLeft = Instance.new("TextLabel")
 FooterLeft.Size = UDim2.new(0.5, -5, 0, 20)
 FooterLeft.Position = UDim2.new(0, 5, 1, -20)
 FooterLeft.BackgroundTransparency = 1
-FooterLeft.RichText = true
 FooterLeft.Text = '<i>Made by <b>Fonda888</b></i>'
 FooterLeft.TextColor3 = Color3.fromRGB(128, 128, 128)
 FooterLeft.TextXAlignment = Enum.TextXAlignment.Left
@@ -338,7 +337,6 @@ local FooterRight = Instance.new("TextLabel")
 FooterRight.Size = UDim2.new(0.5, -5, 0, 20)
 FooterRight.Position = UDim2.new(0.5, 0, 1, -20)
 FooterRight.BackgroundTransparency = 1
-FooterRight.RichText = true
 FooterRight.Text = "v0.9 (BETA)"
 FooterRight.TextColor3 = Color3.fromRGB(128, 128, 128)
 FooterRight.TextXAlignment = Enum.TextXAlignment.Right
