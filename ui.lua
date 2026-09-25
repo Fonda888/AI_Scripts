@@ -4,12 +4,13 @@
 local CoreGui = game:GetService("CoreGui")
 local Players = game:GetService("Players")
 local UserInputService = game:GetService("UserInputService")
+local TeleportService = game:GetService("TeleportService")
 local LocalPlayer = Players.LocalPlayer
 
 local UI = {}
 local MainColors = {
-    Bg = Color3.fromRGB(32, 34, 37),
-    Accent = Color3.fromRGB(47, 49, 54),
+    Bg = Color3.fromRGB(64, 128, 128),
+    Accent = Color3.fromRGB(64, 64, 64),
     Text = Color3.fromRGB(255, 255, 255)
 }
 
@@ -38,12 +39,6 @@ MainFrame.Parent = ScreenGui
 local UICorner = Instance.new("UICorner")
 UICorner.CornerRadius = UDim.new(0, 8)
 UICorner.Parent = MainFrame
-
-local MainStroke = Instance.new("UIStroke")
-MainStroke.Color = Color3.fromRGB(80, 80, 80)
-MainStroke.Thickness = 1
-MainStroke.Enabled = false
-MainStroke.Parent = MainFrame
 
 local TitleBar = Instance.new("TextLabel")
 TitleBar.Size = UDim2.new(1, 0, 0, 30)
@@ -77,11 +72,13 @@ MinCorner.Parent = MinimizeButton
 local DestroyButton = Instance.new("TextButton")
 DestroyButton.Size = UDim2.new(0, 30, 0, 22)
 DestroyButton.Position = UDim2.new(1, -33, 0, 4)
-DestroyButton.BackgroundColor3 = Color3.fromRGB(180, 50, 50)
+DestroyButton.BackgroundColor3 = Color3.fromRGB(128, 64, 64) -- #804040
 DestroyButton.TextColor3 = MainColors.Text
 DestroyButton.Text = "X"
 DestroyButton.Font = Enum.Font.SourceSansBold
 DestroyButton.TextSize = 14
+DestroyButton.TextXAlignment = Enum.TextXAlignment.Center
+DestroyButton.TextYAlignment = Enum.TextYAlignment.Center
 DestroyButton.Parent = TitleBar
 
 local DestroyCorner = Instance.new("UICorner")
@@ -89,6 +86,8 @@ DestroyCorner.CornerRadius = UDim.new(0, 4)
 DestroyCorner.Parent = DestroyButton
 
 local RestoreButton = nil
+local dragRestore, dragStartRes, startPosRes = false, nil, nil
+
 local function CreateRestoreButton()
     if RestoreButton and RestoreButton.Parent then
         RestoreButton.Visible = true
@@ -111,8 +110,24 @@ local function CreateRestoreButton()
     ResCorner.Parent = RestoreButton
 
     RestoreButton.MouseButton1Click:Connect(function()
-        MainFrame.Visible = true
-        RestoreButton.Visible = false
+        if not dragRestore then
+            MainFrame.Visible = true
+            RestoreButton.Visible = false
+        end
+    end)
+    
+    RestoreButton.InputBegan:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+            dragRestore = true
+            dragStartRes = input.Position
+            startPosRes = RestoreButton.Position
+        end
+    end)
+
+    RestoreButton.InputEnded:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+            dragRestore = false
+        end
     end)
 end
 
@@ -189,44 +204,144 @@ local SettingsCorner = Instance.new("UICorner")
 SettingsCorner.CornerRadius = UDim.new(0, 6)
 SettingsCorner.Parent = SettingsFrame
 
-local StyleBtn = Instance.new("TextButton")
-StyleBtn.Size = UDim2.new(1, -20, 0, 35)
-StyleBtn.Position = UDim2.new(0, 10, 0, 10)
-StyleBtn.BackgroundColor3 = MainColors.Bg
-StyleBtn.TextColor3 = MainColors.Text
-StyleBtn.Text = "UI Style: Simple"
-StyleBtn.Font = Enum.Font.SourceSansBold
-StyleBtn.TextSize = 16
-StyleBtn.Parent = SettingsFrame
+local SettingsTitle = Instance.new("TextLabel")
+SettingsTitle.Size = UDim2.new(1, 0, 0, 25)
+SettingsTitle.BackgroundTransparency = 1
+SettingsTitle.Text = "Settings"
+SettingsTitle.TextColor3 = MainColors.Text
+SettingsTitle.Font = Enum.Font.SourceSansBold
+SettingsTitle.TextSize = 18
+SettingsTitle.TextXAlignment = Enum.TextXAlignment.Center
+SettingsTitle.Parent = SettingsFrame
 
-local StyleBtnCorner = Instance.new("UICorner")
-StyleBtnCorner.CornerRadius = UDim.new(0, 6)
-StyleBtnCorner.Parent = StyleBtn
+local SettingsScroll = Instance.new("ScrollingFrame")
+SettingsScroll.Size = UDim2.new(1, -10, 1, -55)
+SettingsScroll.Position = UDim2.new(0, 5, 0, 30)
+SettingsScroll.BackgroundTransparency = 1
+SettingsScroll.BorderSizePixel = 0
+SettingsScroll.ScrollBarThickness = 3
+SettingsScroll.Parent = SettingsFrame
 
-local isElegant = false
-StyleBtn.MouseButton1Click:Connect(function()
-    isElegant = not isElegant
-    StyleBtn.Text = isElegant and "UI Style: Elegant" or "UI Style: Simple"
-    MainStroke.Enabled = isElegant
-    
-    if isElegant then
-        MainFrame.BackgroundColor3 = Color3.fromRGB(24, 25, 28)
-        TitleBar.BackgroundColor3 = Color3.fromRGB(35, 37, 41)
-        OutputScroll.BackgroundColor3 = Color3.fromRGB(35, 37, 41)
-        InputBox.BackgroundColor3 = Color3.fromRGB(35, 37, 41)
-        SettingsFrame.BackgroundColor3 = Color3.fromRGB(35, 37, 41)
-        InputBox.Font = Enum.Font.Gotham
-        TitleBar.Font = Enum.Font.GothamBold
+local SetList = Instance.new("UIListLayout")
+SetList.Parent = SettingsScroll
+SetList.Padding = UDim.new(0, 8)
+SetList.HorizontalAlignment = Enum.HorizontalAlignment.Center
+SetList.SortOrder = Enum.SortOrder.LayoutOrder
+
+local function CreateHeader(text, order)
+    local lbl = Instance.new("TextLabel")
+    lbl.Size = UDim2.new(1, -10, 0, 20)
+    lbl.BackgroundTransparency = 1
+    lbl.Text = text
+    lbl.TextColor3 = Color3.fromRGB(200, 200, 200)
+    lbl.Font = Enum.Font.SourceSansBold
+    lbl.TextSize = 14
+    lbl.TextXAlignment = Enum.TextXAlignment.Left
+    lbl.LayoutOrder = order
+    lbl.Parent = SettingsScroll
+end
+
+local function CreateButton(text, order)
+    local btn = Instance.new("TextButton")
+    btn.Size = UDim2.new(1, -10, 0, 30)
+    btn.BackgroundColor3 = MainColors.Bg
+    btn.TextColor3 = MainColors.Text
+    btn.Text = text
+    btn.Font = Enum.Font.SourceSansBold
+    btn.TextSize = 14
+    btn.LayoutOrder = order
+    btn.Parent = SettingsScroll
+    local corner = Instance.new("UICorner")
+    corner.CornerRadius = UDim.new(0, 6)
+    corner.Parent = btn
+    return btn
+end
+
+CreateHeader("Background", 1)
+
+local BgColorsFrame = Instance.new("Frame")
+BgColorsFrame.Size = UDim2.new(1, -10, 0, 30)
+BgColorsFrame.BackgroundTransparency = 1
+BgColorsFrame.LayoutOrder = 2
+BgColorsFrame.Parent = SettingsScroll
+
+local cList = Instance.new("UIListLayout")
+cList.FillDirection = Enum.FillDirection.Horizontal
+cList.Padding = UDim.new(0, 8)
+cList.Parent = BgColorsFrame
+
+local function AddColorBtn(col)
+    local b = Instance.new("TextButton")
+    b.Size = UDim2.new(0, 30, 0, 30)
+    b.BackgroundColor3 = col
+    b.Text = ""
+    b.Parent = BgColorsFrame
+    local c = Instance.new("UICorner")
+    c.CornerRadius = UDim.new(0, 6)
+    c.Parent = b
+    b.MouseButton1Click:Connect(function()
+        MainFrame.BackgroundColor3 = col
+        RestoreButton.BackgroundColor3 = col
+        MinimizeButton.BackgroundColor3 = col
+    end)
+end
+
+AddColorBtn(Color3.fromRGB(0, 0, 0))
+AddColorBtn(Color3.fromRGB(128, 128, 128))
+AddColorBtn(Color3.fromRGB(64, 128, 128))
+AddColorBtn(Color3.fromRGB(128, 64, 128))
+AddColorBtn(Color3.fromRGB(128, 128, 64))
+
+CreateHeader("Others", 3)
+
+local btnClear = CreateButton("Clear cache", 4)
+local btnRejoin = CreateButton("Rejoin", 5)
+local btnHop = CreateButton("Server hop", 6)
+
+btnClear.MouseButton1Click:Connect(function()
+end)
+
+btnRejoin.MouseButton1Click:Connect(function()
+    if #Players:GetPlayers() <= 1 then
+        LocalPlayer:Kick("\nRejoining...")
+        task.wait()
+        TeleportService:Teleport(game.PlaceId, LocalPlayer)
     else
-        MainFrame.BackgroundColor3 = MainColors.Bg
-        TitleBar.BackgroundColor3 = MainColors.Accent
-        OutputScroll.BackgroundColor3 = MainColors.Accent
-        InputBox.BackgroundColor3 = MainColors.Accent
-        SettingsFrame.BackgroundColor3 = MainColors.Accent
-        InputBox.Font = Enum.Font.SourceSans
-        TitleBar.Font = Enum.Font.SourceSansBold
+        TeleportService:TeleportToPlaceInstance(game.PlaceId, game.JobId, LocalPlayer)
     end
 end)
+
+btnHop.MouseButton1Click:Connect(function()
+    TeleportService:Teleport(game.PlaceId, LocalPlayer)
+end)
+
+task.spawn(function()
+    SettingsScroll.CanvasSize = UDim2.new(0, 0, 0, SetList.AbsoluteContentSize.Y + 10)
+end)
+
+local FooterLeft = Instance.new("TextLabel")
+FooterLeft.Size = UDim2.new(0.5, -5, 0, 20)
+FooterLeft.Position = UDim2.new(0, 5, 1, -20)
+FooterLeft.BackgroundTransparency = 1
+FooterLeft.RichText = true
+FooterLeft.Text = '<i>Made by <b>Fonda888</b></i>'
+FooterLeft.TextColor3 = Color3.fromRGB(128, 128, 128)
+FooterLeft.TextXAlignment = Enum.TextXAlignment.Left
+FooterLeft.TextSize = 12
+FooterLeft.Font = Enum.Font.SourceSans
+FooterLeft.Parent = SettingsFrame
+
+local FooterRight = Instance.new("TextLabel")
+FooterRight.Size = UDim2.new(0.5, -5, 0, 20)
+FooterRight.Position = UDim2.new(0.5, 0, 1, -20)
+FooterRight.BackgroundTransparency = 1
+FooterRight.RichText = true
+FooterRight.Text = "v0.9 (BETA)"
+FooterRight.TextColor3 = Color3.fromRGB(128, 128, 128)
+FooterRight.TextXAlignment = Enum.TextXAlignment.Right
+FooterRight.TextSize = 12
+FooterRight.Font = Enum.Font.SourceSans
+FooterRight.Parent = SettingsFrame
 
 SettingsBtn.MouseButton1Click:Connect(function()
     SettingsFrame.Visible = not SettingsFrame.Visible
@@ -250,12 +365,20 @@ TitleBar.InputEnded:Connect(function(input)
 end)
 
 UserInputService.InputChanged:Connect(function(input)
-    if (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) and dragging then
-        local delta = input.Position - dragStart
-        MainFrame.Position = UDim2.new(
-            startPos.X.Scale, startPos.X.Offset + delta.X,
-            startPos.Y.Scale, startPos.Y.Offset + delta.Y
-        )
+    if input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch then
+        if dragging then
+            local delta = input.Position - dragStart
+            MainFrame.Position = UDim2.new(
+                startPos.X.Scale, startPos.X.Offset + delta.X,
+                startPos.Y.Scale, startPos.Y.Offset + delta.Y
+            )
+        elseif dragRestore and RestoreButton and RestoreButton.Visible then
+            local delta = input.Position - dragStartRes
+            RestoreButton.Position = UDim2.new(
+                startPosRes.X.Scale, startPosRes.X.Offset + delta.X,
+                startPosRes.Y.Scale, startPosRes.Y.Offset + delta.Y
+            )
+        end
     end
 end)
 
@@ -269,7 +392,7 @@ function UI.Log(text, customColor)
     msg.BackgroundTransparency = 1
     msg.Text = "> " .. tostring(text)
     msg.TextColor3 = customColor or MainColors.Text 
-    msg.Font = isElegant and Enum.Font.Gotham or Enum.Font.Code
+    msg.Font = Enum.Font.Code
     msg.TextSize = 13
     msg.TextXAlignment = Enum.TextXAlignment.Left
     msg.TextWrapped = true
