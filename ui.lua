@@ -4,8 +4,6 @@
 local CoreGui = game:GetService("CoreGui")
 local Players = game:GetService("Players")
 local UserInputService = game:GetService("UserInputService")
-local TeleportService = game:GetService("TeleportService")
-local HttpService = game:GetService("HttpService")
 local LocalPlayer = Players.LocalPlayer
 
 local UI = {}
@@ -18,8 +16,15 @@ local MainColors = {
 local ScreenGui = Instance.new("ScreenGui")
 ScreenGui.Name = "AI_Hub_Runtime"
 ScreenGui.ResetOnSpawn = false
-pcall(function() ScreenGui.Parent = CoreGui end)
-if not ScreenGui.Parent then ScreenGui.Parent = LocalPlayer:WaitForChild("PlayerGui", 5) end
+
+local function MountUI()
+    local target = nil
+    pcall(function() target = (gethui and gethui()) or CoreGui end)
+    if not target then target = LocalPlayer:WaitForChild("PlayerGui", 5) end
+    return target
+end
+
+ScreenGui.Parent = MountUI()
 if not ScreenGui.Parent then return end
 
 local MainFrame = Instance.new("Frame")
@@ -33,6 +38,12 @@ MainFrame.Parent = ScreenGui
 local UICorner = Instance.new("UICorner")
 UICorner.CornerRadius = UDim.new(0, 8)
 UICorner.Parent = MainFrame
+
+local MainStroke = Instance.new("UIStroke")
+MainStroke.Color = Color3.fromRGB(80, 80, 80)
+MainStroke.Thickness = 1
+MainStroke.Enabled = false
+MainStroke.Parent = MainFrame
 
 local TitleBar = Instance.new("TextLabel")
 TitleBar.Size = UDim2.new(1, 0, 0, 30)
@@ -144,6 +155,14 @@ local InputCorner = Instance.new("UICorner")
 InputCorner.CornerRadius = UDim.new(0, 6)
 InputCorner.Parent = InputBox
 
+local firstFocus = true
+InputBox.Focused:Connect(function()
+    if firstFocus then
+        InputBox.PlaceholderText = " Ask anything..."
+        firstFocus = false
+    end
+end)
+
 local SettingsBtn = Instance.new("TextButton")
 SettingsBtn.Size = UDim2.new(0, 35, 0, 35)
 SettingsBtn.Position = UDim2.new(1, -45, 1, -45)
@@ -169,6 +188,45 @@ SettingsFrame.Parent = MainFrame
 local SettingsCorner = Instance.new("UICorner")
 SettingsCorner.CornerRadius = UDim.new(0, 6)
 SettingsCorner.Parent = SettingsFrame
+
+local StyleBtn = Instance.new("TextButton")
+StyleBtn.Size = UDim2.new(1, -20, 0, 35)
+StyleBtn.Position = UDim2.new(0, 10, 0, 10)
+StyleBtn.BackgroundColor3 = MainColors.Bg
+StyleBtn.TextColor3 = MainColors.Text
+StyleBtn.Text = "UI Style: Simple"
+StyleBtn.Font = Enum.Font.SourceSansBold
+StyleBtn.TextSize = 16
+StyleBtn.Parent = SettingsFrame
+
+local StyleBtnCorner = Instance.new("UICorner")
+StyleBtnCorner.CornerRadius = UDim.new(0, 6)
+StyleBtnCorner.Parent = StyleBtn
+
+local isElegant = false
+StyleBtn.MouseButton1Click:Connect(function()
+    isElegant = not isElegant
+    StyleBtn.Text = isElegant and "UI Style: Elegant" or "UI Style: Simple"
+    MainStroke.Enabled = isElegant
+    
+    if isElegant then
+        MainFrame.BackgroundColor3 = Color3.fromRGB(24, 25, 28)
+        TitleBar.BackgroundColor3 = Color3.fromRGB(35, 37, 41)
+        OutputScroll.BackgroundColor3 = Color3.fromRGB(35, 37, 41)
+        InputBox.BackgroundColor3 = Color3.fromRGB(35, 37, 41)
+        SettingsFrame.BackgroundColor3 = Color3.fromRGB(35, 37, 41)
+        InputBox.Font = Enum.Font.Gotham
+        TitleBar.Font = Enum.Font.GothamBold
+    else
+        MainFrame.BackgroundColor3 = MainColors.Bg
+        TitleBar.BackgroundColor3 = MainColors.Accent
+        OutputScroll.BackgroundColor3 = MainColors.Accent
+        InputBox.BackgroundColor3 = MainColors.Accent
+        SettingsFrame.BackgroundColor3 = MainColors.Accent
+        InputBox.Font = Enum.Font.SourceSans
+        TitleBar.Font = Enum.Font.SourceSansBold
+    end
+end)
 
 SettingsBtn.MouseButton1Click:Connect(function()
     SettingsFrame.Visible = not SettingsFrame.Visible
@@ -211,7 +269,7 @@ function UI.Log(text, customColor)
     msg.BackgroundTransparency = 1
     msg.Text = "> " .. tostring(text)
     msg.TextColor3 = customColor or MainColors.Text 
-    msg.Font = Enum.Font.Code
+    msg.Font = isElegant and Enum.Font.Gotham or Enum.Font.Code
     msg.TextSize = 13
     msg.TextXAlignment = Enum.TextXAlignment.Left
     msg.TextWrapped = true
