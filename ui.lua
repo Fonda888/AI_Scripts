@@ -190,7 +190,7 @@ SettingsBtn.TextSize = 18
 SettingsBtn.Parent = MainFrame
 
 local SettingsBtnCorner = Instance.new("UICorner")
-SettingsBtnCorner.CornerRadius = UDim.new(0, 0)
+SettingsBtnCorner.CornerRadius = UDim.new(0, 1)
 SettingsBtnCorner.Parent = SettingsBtn
 
 local SettingsFrame = Instance.new("Frame")
@@ -327,6 +327,7 @@ FooterLeft.Size = UDim2.new(0.5, -5, 0, 20)
 FooterLeft.Position = UDim2.new(0, 5, 1, -20)
 FooterLeft.BackgroundTransparency = 1
 FooterLeft.Text = '<i>Made by <b>Fonda888</b></i>'
+FooterLeft.RichText = true
 FooterLeft.TextColor3 = Color3.fromRGB(128, 128, 128)
 FooterLeft.TextXAlignment = Enum.TextXAlignment.Left
 FooterLeft.TextSize = 12
@@ -395,6 +396,7 @@ function UI.Log(text, customColor)
     msg.AutomaticSize = Enum.AutomaticSize.Y
     msg.BackgroundTransparency = 1
     msg.Text = "> " .. tostring(text)
+    msg.RichText = true
     msg.TextColor3 = customColor or MainColors.Text 
     msg.Font = Enum.Font.Code
     msg.TextSize = 13
