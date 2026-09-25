@@ -136,7 +136,7 @@ InputBox.Size = UDim2.new(1, -55, 0, 35)
 InputBox.Position = UDim2.new(0, 10, 1, -45)
 InputBox.BackgroundColor3 = MainColors.Accent
 InputBox.Text = ""
-InputBox.PlaceholderText = " Enter instruction..."
+InputBox.PlaceholderText = ' Try something like "Play 142376088 sound", or "Give me specific tool"...'
 InputBox.TextColor3 = MainColors.Text
 InputBox.Font = Enum.Font.SourceSans
 InputBox.TextSize = 15
@@ -148,9 +148,10 @@ local InputCorner = Instance.new("UICorner")
 InputCorner.CornerRadius = UDim.new(0, 6)
 InputCorner.Parent = InputBox
 
--- ========================================================
--- SETTINGS MENU 
--- ========================================================
+InputBox.Focused:Connect(function()
+    InputBox.PlaceholderText = " Enter instruction..."
+end)
+
 local SettingsBtn = Instance.new("TextButton")
 SettingsBtn.Size = UDim2.new(0, 35, 0, 35)
 SettingsBtn.Position = UDim2.new(1, -45, 1, -45)
@@ -264,7 +265,6 @@ local ClearBtn = createActionBtn("Clear cache", 110)
 local RejoinBtn = createActionBtn("Rejoin", 140)
 local HopBtn = createActionBtn("Server hop", 170)
 
--- Settings Footer Labels
 local MadeByLabel = Instance.new("TextLabel")
 MadeByLabel.Size = UDim2.new(0, 150, 0, 20)
 MadeByLabel.Position = UDim2.new(0, 10, 1, -22)
@@ -330,10 +330,6 @@ HopBtn.MouseButton1Click:Connect(function()
         end
     end
 end)
-
--- ========================================================
--- DRAGGING & LOGGING
--- ========================================================
 
 local dragging = false
 local dragStart = nil
