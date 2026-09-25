@@ -44,7 +44,7 @@ UI.Log("<b>ℹ️ INFO:</b> There is a daily limit of use.", Color3.fromRGB(0, 1
 
 UI.OnInput(function(prompt)
     UI.Log("<b>USER:</b> " .. prompt)
-    UI.Log("Analyzing instruction...")
+    UI.Log("Analyzing message...", Color3.fromRGB(255, 128, 255))
     
     task.spawn(function()
         local context = Env.GetGameState()
@@ -52,22 +52,21 @@ UI.OnInput(function(prompt)
             UI.Log(noticeText, noticeColor)
         end)
         
-        if string.find(aiResponse, "❌") then
-            UI.Log(tostring(aiResponse), Color3.fromRGB(255, 128, 128))
-        else
-            UI.Log("<b>AI:</b> " .. tostring(aiResponse))
-        end
-        
         if actionCode and actionCode ~= "" then
-            UI.Log("Executing requested action...")
+            UI.Log("Executing requested action...", Color3.fromRGB(255, 128, 255))
             local success, err = Env.Execute(actionCode)
             if not success then
                 UI.Log("<b>❌ EXECUTION ERROR:</b> " .. tostring(err))
                 AI.AppendExecutionResult("Error: " .. tostring(err))
             else
-                UI.Log("Action executed successfully.")
                 AI.AppendExecutionResult("Success: Code executed without errors.")
             end
+        end
+        
+        if string.find(aiResponse, "❌") then
+            UI.Log(tostring(aiResponse), Color3.fromRGB(255, 128, 128))
+        else
+            UI.Log("<b>AI:</b> " .. tostring(aiResponse))
         end
     end)
 end)
