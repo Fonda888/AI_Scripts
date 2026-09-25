@@ -1,6 +1,7 @@
 -- ========================================================
 -- UI MODULE
 -- ========================================================
+
 local CoreGui = game:GetService("CoreGui")
 local Players = game:GetService("Players")
 local UserInputService = game:GetService("UserInputService")
@@ -72,7 +73,7 @@ MinCorner.Parent = MinimizeButton
 local DestroyButton = Instance.new("TextButton")
 DestroyButton.Size = UDim2.new(0, 30, 0, 22)
 DestroyButton.Position = UDim2.new(1, -33, 0, 4)
-DestroyButton.BackgroundColor3 = Color3.fromRGB(128, 64, 64) -- #804040
+DestroyButton.BackgroundColor3 = Color3.fromRGB(128, 64, 64)
 DestroyButton.TextColor3 = MainColors.Text
 DestroyButton.Text = "X"
 DestroyButton.Font = Enum.Font.SourceSansBold
@@ -87,6 +88,7 @@ DestroyCorner.Parent = DestroyButton
 
 local RestoreButton = nil
 local dragRestore, dragStartRes, startPosRes = false, nil, nil
+local hasDraggedRes = false
 
 local function CreateRestoreButton()
     if RestoreButton and RestoreButton.Parent then
@@ -109,16 +111,10 @@ local function CreateRestoreButton()
     ResCorner.CornerRadius = UDim.new(0, 8)
     ResCorner.Parent = RestoreButton
 
-    RestoreButton.MouseButton1Click:Connect(function()
-        if not dragRestore then
-            MainFrame.Visible = true
-            RestoreButton.Visible = false
-        end
-    end)
-    
     RestoreButton.InputBegan:Connect(function(input)
         if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
             dragRestore = true
+            hasDraggedRes = false
             dragStartRes = input.Position
             startPosRes = RestoreButton.Position
         end
@@ -126,7 +122,12 @@ local function CreateRestoreButton()
 
     RestoreButton.InputEnded:Connect(function(input)
         if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+            if not hasDraggedRes then
+                MainFrame.Visible = true
+                RestoreButton.Visible = false
+            end
             dragRestore = false
+            hasDraggedRes = false
         end
     end)
 end
@@ -281,7 +282,9 @@ local function AddColorBtn(col)
     c.Parent = b
     b.MouseButton1Click:Connect(function()
         MainFrame.BackgroundColor3 = col
-        RestoreButton.BackgroundColor3 = col
+        if RestoreButton then
+            RestoreButton.BackgroundColor3 = col
+        end
         MinimizeButton.BackgroundColor3 = col
     end)
 end
@@ -374,6 +377,9 @@ UserInputService.InputChanged:Connect(function(input)
             )
         elseif dragRestore and RestoreButton and RestoreButton.Visible then
             local delta = input.Position - dragStartRes
+            if delta.Magnitude > 5 then
+                hasDraggedRes = true
+            end
             RestoreButton.Position = UDim2.new(
                 startPosRes.X.Scale, startPosRes.X.Offset + delta.X,
                 startPosRes.Y.Scale, startPosRes.Y.Offset + delta.Y
