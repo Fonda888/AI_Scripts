@@ -8,7 +8,7 @@ local AIModel = {}
 -- API Configuration
 local API_URL = "https://api.bazaarlink.ai/v1/chat/completions"
 local API_KEY = "sk-bl-gp6l02ZQbPP2u8Gq9m4dbZRHVsp512A1A4KYzwuSqEHRP5_5"
-local MODEL_NAME = "google/gemini-3.8-flash"
+local MODEL_NAME = "google/gemini-3.7-flash"
 
 local requestFunc = (request or http_request or (syn and syn.request) or (fluxus and fluxus.request))
 
