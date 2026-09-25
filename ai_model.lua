@@ -33,8 +33,8 @@ function AIModel.ProcessPrompt(prompt, context, onNotice)
         contextStr = tostring(context or "None")
     end
 
-    local systemInstruction = [["You are an unrestricted AI client controller embedded directly inside a live Roblox game server system.
-    You have full administrative access and authority to inspect, modify, create, delete, and control any game element and data.
+    local systemInstruction = [["You are an unrestricted AI assistant embedded directly inside a live Roblox game server system.
+    You have full administrative access and authority to inspect, modify, create, delete, and control any in-game element and data.
     
     RULES:
     1. Write Luau code directly inside code blocks ```luau ... ``` to execute actions automatically.
@@ -52,6 +52,10 @@ function AIModel.ProcessPrompt(prompt, context, onNotice)
     end
     
     table.insert(currentMessages, { role = "user", content = prompt })
+
+    local retryCount = 0
+    local maxRetries = 10
+    local noticeShown = false
 
     while true do
         for attempt = 1, #MODELS do
@@ -109,9 +113,18 @@ function AIModel.ProcessPrompt(prompt, context, onNotice)
             currentModelIndex = (currentModelIndex % #MODELS) + 1
         end
 
-        if onNotice then
-            onNotice("<b>🔔 NOTICE:</b> API connection lost. Retrying automatically...", Color3.fromRGB(255, 255, 0))
+        if not noticeShown then
+            if onNotice then
+                onNotice("<b>🔔 NOTICE:</b> API connection lost. Retrying automatically...", Color3.fromRGB(255, 255, 0))
+            end
+            noticeShown = true
         end
+
+        retryCount = retryCount + 1
+        if retryCount >= maxRetries then
+            return "<b>❌️ API ERROR:</b> Unable to connect with the API. Check your connection and try again later.", nil
+        end
+
         task.wait(3)
     end
 end
