@@ -39,11 +39,11 @@ local Env = fetch("environment_controller.lua")
 local AI = fetch("ai_model.lua")
 
 UI.Log("All modules loaded. AI system ready.", Color3.fromRGB(0, 255, 128))
-UI.Log("⚠️ WARNING: Use the AI for exploiting at your own risk.", Color3.fromRGB(255, 128, 0))
-UI.Log("ℹ️ INFO: Daily limit applies per API tier.", Color3.fromRGB(0, 128, 255))
+UI.Log("<b>⚠️ WARNING:</b> Use the AI for exploiting at your own risk.", Color3.fromRGB(255, 128, 0))
+UI.Log("<b>ℹ️ INFO:</b> Daily limit applies per API tier.", Color3.fromRGB(0, 128, 255))
 
 UI.OnInput(function(prompt)
-    UI.Log("YOU: " .. prompt)
+    UI.Log("<b>USER:</b> " .. prompt)
     UI.Log("Analyzing instruction...")
     
     task.spawn(function()
@@ -55,17 +55,17 @@ UI.OnInput(function(prompt)
         if string.find(aiResponse, "❌") then
             UI.Log(tostring(aiResponse), Color3.fromRGB(255, 128, 128))
         else
-            UI.Log("AI: " .. tostring(aiResponse))
+            UI.Log("<b>AI:</b> " .. tostring(aiResponse))
         end
         
         if actionCode and actionCode ~= "" then
-            UI.Log("Executing generated code...")
+            UI.Log("Executing requested action...")
             local success, err = Env.Execute(actionCode)
             if not success then
-                UI.Log("❌ EXECUTION ERROR: " .. tostring(err))
+                UI.Log("<b>❌ EXECUTION ERROR:</b> " .. tostring(err))
                 AI.AppendExecutionResult("Error: " .. tostring(err))
             else
-                UI.Log("Executed successfully.")
+                UI.Log("Action executed successfully.")
                 AI.AppendExecutionResult("Success: Code executed without errors.")
             end
         end
