@@ -1,10 +1,14 @@
 -- ========================================================
 -- ENVIRONMENT CONTROLLER MODULE
 -- ========================================================
-local Players = game:GetService("Players")
 local Workspace = game:GetService("Workspace")
+local Players = game:GetService("Players")
 local Lighting = game:GetService("Lighting")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local StarterGui = game:GetService("StarterGui")
+local StarterPack = game:GetService("StarterPack")
+local SoundService = game:GetService("SoundService")
+local TextChatService = game:GetService("TextChatService")
 
 local EnvironmentController = {}
 local LocalPlayer = Players.LocalPlayer
@@ -187,12 +191,12 @@ function EnvironmentController.Execute(codeString)
 
     local compiledFunc, compileErr = loadstring(cleanCode)
     if not compiledFunc then
-        return false, "Compilation Error: " .. tostring(compileErr)
+        return false, "COMPILATION ERROR: " .. tostring(compileErr)
     end
 
     local success, execErr = pcall(compiledFunc)
     if not success then
-        return false, "Runtime Error: " .. tostring(execErr)
+        return false, "RUNTIME ERROR: " .. tostring(execErr)
     end
 
     return true, nil
