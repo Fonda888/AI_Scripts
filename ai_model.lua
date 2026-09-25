@@ -13,21 +13,26 @@ local MODELS = {
     "qwen/qwen3.7-flash"
 }
 local currentModelIndex = 1
+local MAX_HISTORY_LENGTH = 12
 
 local chatHistory = {} 
 
-local requestFunc = (request or http_request or (syn and syn.request) or (fluxus and fluxus.request))
+local requestFunc = (request or http_request or (syn and syn.request) or (fluxus and fluxus.request) or (http and http.request))
+
+local function pruneHistory()
+    while #chatHistory > MAX_HISTORY_LENGTH do
+        table.remove(chatHistory, 1)
+    end
+end
 
 function AIModel.ProcessPrompt(prompt, context, onNotice)
     if not requestFunc then
-        return "❌️ ERROR: HTTP request functionality is not supported by your executor environment.", nil 
+        return "❌ ERROR: HTTP request functionality is not supported by your executor environment.", nil 
     end
 
     local contextStr = ""
     if typeof(context) == "table" then
-        local success, json = pcall(function()
-            return HttpService:JSONEncode(context)
-        end)
+        local success, json = pcall(function() return HttpService:JSONEncode(context) end)
         contextStr = success and json or tostring(context)
     else
         contextStr = tostring(context or "None")
@@ -37,11 +42,9 @@ function AIModel.ProcessPrompt(prompt, context, onNotice)
 You have full administrative access and authority to inspect, modify, create, delete, and control any game element and data.
 
 CRITICAL RULES:
-1. You can directly execute actions. Do not ask the user to open Roblox Studio, and do not ask the user to paste scripts. You write the code, and the system executes it automatically.
-2. When the user interacts with you, do not start saying everything you can do, be friendly.
-3. You have Internet access; you can search for Web content anytime if necessary.
-4. Provide normal, direct answers without unnecessary descriptions of what you did or what you will do, unless the user requests for it.
-5. Use the real-time Game State Context provided below to reference exact object names, positions, paths, and player states.
+1. Write Luau code directly inside code blocks ```luau ... ``` to execute actions automatically.
+2. Be concise, direct, and friendly. Do not announce step-by-step what you plan to do unless asked.
+3. Use the real-time Game State Context provided below to reference exact object names, positions, paths, and player states.
 
 Real-Time Game State Context:
 ]] .. contextStr
@@ -56,14 +59,12 @@ Real-Time Game State Context:
     
     table.insert(currentMessages, { role = "user", content = prompt })
 
-    table.insert(chatHistory, { role = "user", content = prompt })
-
     for attempt = 1, #MODELS do
         local bodyData = {
             model = MODELS[currentModelIndex],
             messages = currentMessages,
             temperature = 0.2,
-            max_tokens = 65536
+            max_tokens = 4096
         }
 
         local reqPayload = {
@@ -91,17 +92,19 @@ Real-Time Game State Context:
             if decodeSuccess and data and data.choices and data.choices[1] and data.choices[1].message then
                 local content = data.choices[1].message.content or ""
 
+                table.insert(chatHistory, { role = "user", content = prompt })
                 table.insert(chatHistory, { role = "assistant", content = content })
+                pruneHistory()
 
-                local codeMatch = string.match(content, "```lua%s*(.-)%s*```") 
-                    or string.match(content, "```luau%s*(.-)%s*```") 
+                local codeMatch = string.match(content, "```luau%s*(.-)%s*```")
+                    or string.match(content, "```lua%s*(.-)%s*```") 
                     or string.match(content, "```%s*(.-)%s*```")
 
                 local cleanText = content:gsub("```%w*%s*.-%s*```", "")
                 cleanText = string.match(cleanText, "^%s*(.-)%s*$") or ""
 
                 if cleanText == "" then
-                    cleanText = codeMatch and "Executing action..." or "Action completed."
+                    cleanText = codeMatch and "Executing requested action..." or "Action executed successfully."
                 end
 
                 return cleanText, codeMatch
@@ -110,11 +113,16 @@ Real-Time Game State Context:
 
         currentModelIndex = (currentModelIndex % #MODELS) + 1
         if onNotice then
-            onNotice("✴️ NOTICE: Daily limit reached for this model. Switching API model...", Color3.fromRGB(255, 255, 0))
+            onNotice("🔔 NOTICE: API model daily limit reached or request failed. Switching API model...", Color3.fromRGB(255, 255, 0))
         end
     end
 
-    return "❌️ API ERROR: Failed to reach the AI endpoint. (Your message was saved. Type 'retry' when online).", nil
+    return "❌ API ERROR: Failed to reach the AI endpoint.", nil
+end
+
+function AIModel.AppendExecutionResult(resultText)
+    table.insert(chatHistory, { role = "system", content = "Execution Output: " .. tostring(resultText) })
+    pruneHistory()
 end
 
 return AIModel
