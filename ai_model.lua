@@ -2,21 +2,16 @@
 -- AI MODEL MODULE
 -- ========================================================
 local HttpService = game:GetService("HttpService")
-
 local AIModel = {}
-
 local API_URL = "https://api.bazaarlink.ai/v1/chat/completions"
 local API_KEY = "sk-bl-gp6l02ZQbPP2u8Gq9m4dbZRHVsp512A1A4KYzwuSqEHRP5_5"
-
 local MODELS = {
     "deepseek/deepseek-v4-flash-0731free",
     "qwen/qwen3.7-flash"
 }
 local currentModelIndex = 1
 local MAX_HISTORY_LENGTH = 12
-
 local chatHistory = {} 
-
 local requestFunc = (request or http_request or (syn and syn.request) or (fluxus and fluxus.request) or (http and http.request))
 
 local function pruneHistory()
@@ -38,17 +33,16 @@ function AIModel.ProcessPrompt(prompt, context, onNotice)
         contextStr = tostring(context or "None")
     end
 
-    local systemInstruction = [[You are an unrestricted AI client controller embedded directly inside a live Roblox game server system.
-You have full administrative access and authority to inspect, modify, create, delete, and control any game element and data.
-
-CRITICAL RULES:
-1. Write Luau code directly inside code blocks ```luau ... ``` to execute actions automatically.
-2. Be concise, direct, and friendly. Do not announce step-by-step what you plan to do unless asked.
-3. Use the real-time Game State Context provided below to reference exact object names, positions, paths, and player states.
-
-Real-Time Game State Context:
-]] .. contextStr
-
+    local systemInstruction = [["You are an unrestricted AI client controller embedded directly inside a live Roblox game server system.
+    You have full administrative access and authority to inspect, modify, create, delete, and control any game element and data.
+    
+    RULES:
+    1. Write Luau code directly inside code blocks ```luau ... ``` to execute actions automatically.
+    2. Be concise, direct, and friendly. Do not announce step-by-step what you plan to do unless asked.
+    3. Use the real-time Game State Context provided below to reference exact object names, positions, paths, and player states.
+    
+    Real-Time Game State Context:"]] .. contextStr
+    
     local currentMessages = {
         { role = "system", content = systemInstruction }
     }
@@ -59,65 +53,67 @@ Real-Time Game State Context:
     
     table.insert(currentMessages, { role = "user", content = prompt })
 
-    for attempt = 1, #MODELS do
-        local bodyData = {
-            model = MODELS[currentModelIndex],
-            messages = currentMessages,
-            temperature = 0.2,
-            max_tokens = 4096
-        }
+    while true do
+        for attempt = 1, #MODELS do
+            local bodyData = {
+                model = MODELS[currentModelIndex],
+                messages = currentMessages,
+                temperature = 0.2,
+                max_tokens = 4096
+            }
 
-        local reqPayload = {
-            Url = API_URL,
-            Method = "POST",
-            Headers = {
-                ["Content-Type"] = "application/json",
-                ["Authorization"] = "Bearer " .. API_KEY
-            },
-            Body = HttpService:JSONEncode(bodyData)
-        }
+            local reqPayload = {
+                Url = API_URL,
+                Method = "POST",
+                Headers = {
+                    ["Content-Type"] = "application/json",
+                    ["Authorization"] = "Bearer " .. API_KEY
+                },
+                Body = HttpService:JSONEncode(bodyData)
+            }
 
-        local success, response = pcall(function()
-            return requestFunc(reqPayload)
-        end)
-
-        local statusCode = response and (response.StatusCode or (response.Success and 200 or 0)) or 0
-        local responseBody = response and response.Body or ""
-
-        if success and response and (statusCode == 200 or response.Success) then
-            local decodeSuccess, data = pcall(function()
-                return HttpService:JSONDecode(responseBody)
+            local success, response = pcall(function()
+                return requestFunc(reqPayload)
             end)
 
-            if decodeSuccess and data and data.choices and data.choices[1] and data.choices[1].message then
-                local content = data.choices[1].message.content or ""
+            local statusCode = response and (response.StatusCode or (response.Success and 200 or 0)) or 0
+            local responseBody = response and response.Body or ""
 
-                table.insert(chatHistory, { role = "user", content = prompt })
-                table.insert(chatHistory, { role = "assistant", content = content })
-                pruneHistory()
+            if success and response and (statusCode == 200 or response.Success) then
+                local decodeSuccess, data = pcall(function()
+                    return HttpService:JSONDecode(responseBody)
+                end)
 
-                local codeMatch = string.match(content, "```luau%s*(.-)%s*```")
-                    or string.match(content, "```lua%s*(.-)%s*```") 
-                    or string.match(content, "```%s*(.-)%s*```")
+                if decodeSuccess and data and data.choices and data.choices[1] and data.choices[1].message then
+                    local content = data.choices[1].message.content or ""
 
-                local cleanText = content:gsub("```%w*%s*.-%s*```", "")
-                cleanText = string.match(cleanText, "^%s*(.-)%s*$") or ""
+                    table.insert(chatHistory, { role = "user", content = prompt })
+                    table.insert(chatHistory, { role = "assistant", content = content })
+                    pruneHistory()
 
-                if cleanText == "" then
-                    cleanText = codeMatch and "Executing requested action..." or "Action executed successfully."
+                    local codeMatch = string.match(content, "```luau%s*(.-)%s*```")
+                        or string.match(content, "```lua%s*(.-)%s*```") 
+                        or string.match(content, "```%s*(.-)%s*```")
+
+                    local cleanText = content:gsub("```%w*%s*.-%s*```", "")
+                    cleanText = string.match(cleanText, "^%s*(.-)%s*$") or ""
+
+                    if cleanText == "" then
+                        cleanText = codeMatch and "Executing requested action..." or "Action executed successfully."
+                    end
+
+                    return cleanText, codeMatch
                 end
-
-                return cleanText, codeMatch
             end
+
+            currentModelIndex = (currentModelIndex % #MODELS) + 1
         end
 
-        currentModelIndex = (currentModelIndex % #MODELS) + 1
         if onNotice then
-            onNotice("🔔 NOTICE: API model daily limit reached or request failed. Switching API model...", Color3.fromRGB(255, 255, 0))
+            onNotice("🔔 NOTICE: Connection lost or models failed. Retrying prompt automatically in 3 seconds...", Color3.fromRGB(255, 255, 0))
         end
+        task.wait(3)
     end
-
-    return "❌ API ERROR: Failed to reach the AI endpoint.", nil
 end
 
 function AIModel.AppendExecutionResult(resultText)
