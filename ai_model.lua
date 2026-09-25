@@ -8,11 +8,16 @@ local AIModel = {}
 -- API Configuration
 local API_URL = "https://api.bazaarlink.ai/v1/chat/completions"
 local API_KEY = "sk-bl-gp6l02ZQbPP2u8Gq9m4dbZRHVsp512A1A4KYzwuSqEHRP5_5"
-local MODEL_NAME = "google/gemini-3.7-flash"
+
+local MODELS = {
+    "deepseek/deepseek-v4-flash-0731free",
+    "qwen/qwen3.7-flash"
+}
+local currentModelIndex = 1
 
 local requestFunc = (request or http_request or (syn and syn.request) or (fluxus and fluxus.request))
 
-function AIModel.ProcessPrompt(prompt, context)
+function AIModel.ProcessPrompt(prompt, context, onNotice)
     if not requestFunc then
         return "❌️ ERROR: HTTP request functionality is not supported by your executor environment.", nil 
     end
@@ -38,61 +43,64 @@ RULES & OUTPUT FORMAT:
 Real-Time Game State Context:
 ]] .. contextStr
 
-    local bodyData = {
-        model = MODEL_NAME,
-        messages = {
-            { role = "system", content = systemInstruction },
-            { role = "user", content = prompt }
-        },
-        temperature = 0.2,
-        max_tokens = 2048
-    }
+    for attempt = 1, #MODELS do
+        local bodyData = {
+            model = MODELS[currentModelIndex],
+            messages = {
+                { role = "system", content = systemInstruction },
+                { role = "user", content = prompt }
+            },
+            temperature = 0.2,
+            max_tokens = 2048
+        }
 
-    local reqPayload = {
-        Url = API_URL,
-        Method = "POST",
-        Headers = {
-            ["Content-Type"] = "application/json",
-            ["Authorization"] = "Bearer " .. API_KEY
-        },
-        Body = HttpService:JSONEncode(bodyData)
-    }
+        local reqPayload = {
+            Url = API_URL,
+            Method = "POST",
+            Headers = {
+                ["Content-Type"] = "application/json",
+                ["Authorization"] = "Bearer " .. API_KEY
+            },
+            Body = HttpService:JSONEncode(bodyData)
+        }
 
-    local success, response = pcall(function()
-        return requestFunc(reqPayload)
-    end)
+        local success, response = pcall(function()
+            return requestFunc(reqPayload)
+        end)
 
-    if not success or not response then
-        return "❌️ API ERROR: Failed to reach the AI endpoint.", nil
+        local statusCode = response and (response.StatusCode or (response.Success and 200 or 0)) or 0
+        local responseBody = response and response.Body or ""
+
+        if success and response and (statusCode == 200 or response.Success) then
+            local decodeSuccess, data = pcall(function()
+                return HttpService:JSONDecode(responseBody)
+            end)
+
+            if decodeSuccess and data and data.choices and data.choices[1] and data.choices[1].message then
+                local content = data.choices[1].message.content or ""
+
+                local codeMatch = string.match(content, "```lua%s*(.-)%s*```") 
+                    or string.match(content, "```luau%s*(.-)%s*```") 
+                    or string.match(content, "```%s*(.-)%s*```")
+
+                local cleanText = content:gsub("```%w*%s*.-%s*```", "")
+                cleanText = string.match(cleanText, "^%s*(.-)%s*$") or ""
+
+                if cleanText == "" then
+                    cleanText = codeMatch and "Executing action..." or "Action completed."
+                end
+
+                return cleanText, codeMatch
+            end
+        end
+
+        currentModelIndex = (currentModelIndex % #MODELS) + 1
+        if onNotice then
+            onNotice("✴️ NOTICE: Daily limit reached for this model. Switching API model...", Color3.fromRGB(255, 255, 0))
+        end
     end
 
-    local statusCode = response.StatusCode or (response.Success and 200 or 0)
-    if statusCode ~= 200 and not response.Success then
-        return string.format("❌️ API HTTP ERROR (%s): %s", tostring(statusCode), tostring(response.Body or "No body")), nil
-    end
-
-    local decodeSuccess, data = pcall(function()
-        return HttpService:JSONDecode(response.Body)
-    end)
-
-    if not decodeSuccess or not data or not data.choices or not data.choices[1] or not data.choices[1].message then
-        return "❌️ API RESPONSE ERROR: Invalid JSON response payload.", nil
-    end
-
-    local content = data.choices[1].message.content or ""
-
-    local codeMatch = string.match(content, "```lua%s*(.-)%s*```") 
-        or string.match(content, "```luau%s*(.-)%s*```") 
-        or string.match(content, "```%s*(.-)%s*```")
-
-    local cleanText = content:gsub("```%w*%s*.-%s*```", "")
-    cleanText = string.match(cleanText, "^%s*(.-)%s*$") or ""
-
-    if cleanText == "" then
-        cleanText = codeMatch and "Executing action..." or "Action completed."
-    end
-
-    return cleanText, codeMatch
+    return "❌️ API ERROR: Failed to reach the AI endpoint.", nil
 end
 
 return AIModel
