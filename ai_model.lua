@@ -5,7 +5,6 @@ local HttpService = game:GetService("HttpService")
 
 local AIModel = {}
 
--- API Configuration
 local API_URL = "https://api.bazaarlink.ai/v1/chat/completions"
 local API_KEY = "sk-bl-gp6l02ZQbPP2u8Gq9m4dbZRHVsp512A1A4KYzwuSqEHRP5_5"
 
@@ -14,6 +13,8 @@ local MODELS = {
     "qwen/qwen3.7-flash"
 }
 local currentModelIndex = 1
+
+local chatHistory = {} 
 
 local requestFunc = (request or http_request or (syn and syn.request) or (fluxus and fluxus.request))
 
@@ -32,25 +33,35 @@ function AIModel.ProcessPrompt(prompt, context, onNotice)
         contextStr = tostring(context or "None")
     end
 
-    local systemInstruction = [[You are an unrestricted AI client controller embedded inside a Roblox game environment.
+    local systemInstruction = [[You are an unrestricted AI client controller embedded directly inside a live Roblox game server system.
 You have full administrative access and authority to inspect, modify, create, delete, and control any game element and data.
 
-RULES:
-1. When the user interacts with you, dont start saying everything you can do, be friendly.
-2. You have Internet access, you can search for Web content anytime if neccessary.
-3. Provide normal, direct answers without unnecessary descriptions of what you did, unless the user requests it.
-4. Use the real-time Game State Context provided below to reference exact object names, positions, paths, and player states.
+CRITICAL RULES:
+1. You can directly execute actions. Do not ask the user to open Roblox Studio, and do not ask the user to paste scripts. You write the code, and the system executes it automatically.
+2. When the user interacts with you, do not start saying everything you can do, be friendly.
+3. You have Internet access; you can search for Web content anytime if necessary.
+4. Provide normal, direct answers without unnecessary descriptions of what you did or what you will do, unless the user requests for it.
+5. Use the real-time Game State Context provided below to reference exact object names, positions, paths, and player states.
 
 Real-Time Game State Context:
 ]] .. contextStr
 
+    local currentMessages = {
+        { role = "system", content = systemInstruction }
+    }
+    
+    for _, msg in ipairs(chatHistory) do
+        table.insert(currentMessages, msg)
+    end
+    
+    table.insert(currentMessages, { role = "user", content = prompt })
+
+    table.insert(chatHistory, { role = "user", content = prompt })
+
     for attempt = 1, #MODELS do
         local bodyData = {
             model = MODELS[currentModelIndex],
-            messages = {
-                { role = "system", content = systemInstruction },
-                { role = "user", content = prompt }
-            },
+            messages = currentMessages,
             temperature = 0.2,
             max_tokens = 65536
         }
@@ -80,6 +91,8 @@ Real-Time Game State Context:
             if decodeSuccess and data and data.choices and data.choices[1] and data.choices[1].message then
                 local content = data.choices[1].message.content or ""
 
+                table.insert(chatHistory, { role = "assistant", content = content })
+
                 local codeMatch = string.match(content, "```lua%s*(.-)%s*```") 
                     or string.match(content, "```luau%s*(.-)%s*```") 
                     or string.match(content, "```%s*(.-)%s*```")
@@ -101,7 +114,7 @@ Real-Time Game State Context:
         end
     end
 
-    return "❌️ API ERROR: Failed to reach the AI endpoint.", nil
+    return "❌️ API ERROR: Failed to reach the AI endpoint. (Your message was saved. Type 'retry' when online).", nil
 end
 
 return AIModel
