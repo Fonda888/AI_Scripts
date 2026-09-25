@@ -22,7 +22,7 @@ end
 
 function AIModel.ProcessPrompt(prompt, context, onNotice)
     if not requestFunc then
-        return "❌ ERROR: HTTP request functionality is not supported by your executor environment.", nil 
+        return "<b>❌ ERROR:</b> HTTP request functionality is not supported by your executor environment.", nil 
     end
 
     local contextStr = ""
@@ -110,7 +110,7 @@ function AIModel.ProcessPrompt(prompt, context, onNotice)
         end
 
         if onNotice then
-            onNotice("🔔 NOTICE: Connection lost or models failed. Retrying prompt automatically in 3 seconds...", Color3.fromRGB(255, 255, 0))
+            onNotice("<b>🔔 NOTICE:</b> API connection lost. Retrying automatically...", Color3.fromRGB(255, 255, 0))
         end
         task.wait(3)
     end
