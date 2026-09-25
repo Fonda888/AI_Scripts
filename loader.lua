@@ -34,7 +34,7 @@ end
 
 print("Loading modules, please wait...")
 
-local UI = fetch("ui_core.lua")
+local UI = fetch("ui.lua")
 local Env = fetch("environment_controller.lua")
 local AI = fetch("ai_model.lua")
 
