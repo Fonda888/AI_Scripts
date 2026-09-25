@@ -39,7 +39,7 @@ local Env = fetch("environment_controller.lua")
 local AI = fetch("ai_model.lua")
 
 UI.Log("All modules loaded. AI system ready.", Color3.fromRGB(0, 255, 128))
-UI.Log("⚠️ WARNING: Use the AI for scripting/modifying at your own risk.", Color3.fromRGB(255, 128, 0))
+UI.Log("⚠️ WARNING: Use the AI for exploiting at your own risk.", Color3.fromRGB(255, 128, 0))
 UI.Log("ℹ️ INFO: Daily limit applies per API tier.", Color3.fromRGB(0, 128, 255))
 
 UI.OnInput(function(prompt)
