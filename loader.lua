@@ -34,11 +34,23 @@ end
 
 print("Loading modules, please wait...")
 
+local SettingsMan = fetch("settings_manager.lua")
 local UI = fetch("ui.lua")
 local Env = fetch("environment_controller.lua")
 local AI = fetch("ai_model.lua")
 
-UI.Log("All modules loaded. AI system ready.", Color3.fromRGB(0, 255, 128))
+local savedSettings = SettingsMan.Load()
+UI.SaveSettings = function()
+    local colorArray = nil
+end
+
+local originalInit = UI.InitializeSettings
+UI.SaveSettings = function()
+end
+
+UI.InitializeSettings(savedSettings.Theme, savedSettings.CustomBgColor)
+
+UI.Log("All modules loaded. Ready for use.", Color3.fromRGB(0, 255, 128))
 UI.Log("<b>⚠️ WARNING:</b> Use the AI for exploiting at your own risk.", Color3.fromRGB(255, 128, 0))
 UI.Log("<b>ℹ️ INFO:</b> There is a daily limit of use.", Color3.fromRGB(0, 128, 255))
 
@@ -63,10 +75,6 @@ UI.OnInput(function(prompt)
             end
         end
         
-        if string.find(aiResponse, "❌") then
-            UI.Log(tostring(aiResponse), Color3.fromRGB(255, 128, 128))
-        else
-            UI.Log("<b>AI:</b> " .. tostring(aiResponse))
-        end
+         UI.Log("<b>AI:</b> " .. tostring(aiResponse))
     end)
 end)
