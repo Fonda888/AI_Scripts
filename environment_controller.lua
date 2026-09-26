@@ -11,10 +11,12 @@ local LocalPlayer = Players.LocalPlayer
 
 local function safeGetAttributes(instance)
     local attrs = {}
-    if instance and instance.GetAttributes then
+    if instance and pcall(function() return instance.GetAttributes end) and instance.GetAttributes then
         pcall(function()
             for k, v in pairs(instance:GetAttributes()) do
-                attrs[k] = tostring(v)
+                if type(v) == "string" or type(v) == "number" or type(v) == "boolean" then
+                    attrs[k] = tostring(v)
+                end
             end
         end)
     end
@@ -47,7 +49,10 @@ function EnvironmentController.GetGameState()
         local leaderstats = LocalPlayer:FindFirstChild("leaderstats")
         if leaderstats then
             for _, v in ipairs(leaderstats:GetChildren()) do
-                playerState.Leaderstats[v.Name] = v.Value
+                -- Check to ensure it's a value object
+                if v:IsA("ValueBase") or v.Value ~= nil then
+                    playerState.Leaderstats[v.Name] = tostring(v.Value)
+                end
             end
         end
 
@@ -70,20 +75,25 @@ function EnvironmentController.GetGameState()
             rayParams.FilterDescendantsInstances = {char}
             rayParams.FilterType = Enum.RaycastFilterType.Exclude
 
-            local hitForward = Workspace:Raycast(hrp.Position, hrp.CFrame.LookVector * 15, rayParams)
-            if hitForward then
-                raycastInfo.ObstacleAhead = true
-                raycastInfo.ObstacleName = hitForward.Instance.Name
-            end
-
-            local hitDown = Workspace:Raycast(hrp.Position, Vector3.new(0, -10, 0), rayParams)
-            if hitDown and hitDown.Instance then
-                raycastInfo.FloorMaterial = hitDown.Material.Name
-                local lowerName = string.lower(hitDown.Instance.Name)
-                if lowerName:find("kill") or lowerName:find("lava") or lowerName:find("hazard") or lowerName:find("death") then
-                    raycastInfo.HazardBelow = true
+            pcall(function()
+                local lookVec = hrp.CFrame.LookVector
+                if lookVec.Magnitude > 0 then
+                    local hitForward = Workspace:Raycast(hrp.Position, lookVec * 15, rayParams)
+                    if hitForward then
+                        raycastInfo.ObstacleAhead = true
+                        raycastInfo.ObstacleName = hitForward.Instance.Name
+                    end
                 end
-            end
+
+                local hitDown = Workspace:Raycast(hrp.Position, Vector3.new(0, -10, 0), rayParams)
+                if hitDown and hitDown.Instance then
+                    raycastInfo.FloorMaterial = hitDown.Material.Name
+                    local lowerName = string.lower(hitDown.Instance.Name)
+                    if lowerName:find("kill") or lowerName:find("lava") or lowerName:find("hazard") or lowerName:find("death") then
+                        raycastInfo.HazardBelow = true
+                    end
+                end
+            end)
         end
 
         local workspaceTree = {}
@@ -126,11 +136,7 @@ function EnvironmentController.GetGameState()
             Player = playerState,
             MouseTarget = mouseTargetInfo,
             Raycast = raycastInfo,
-            World = {
-                Gravity = Workspace.Gravity,
-                TimeOfDay = Lighting.TimeOfDay,
-                ClockTime = Lighting.ClockTime
-            },
+            World = { Gravity = Workspace.Gravity, TimeOfDay = Lighting.TimeOfDay, ClockTime = Lighting.ClockTime },
             WorkspaceOverview = workspaceTree,
             NearbyEntities = nearbyEntities,
             Inventory = inventory
@@ -157,7 +163,7 @@ function EnvironmentController.Execute(codeString)
         return false, "COMPILATION ERROR: " .. tostring(compileErr)
     end
 
-    local success, execErr = pcall(compiledFunc)
+    local success, execErr = pcall(function() return compiledFunc() end)
     if not success then
         return false, "RUNTIME ERROR: " .. tostring(execErr)
     end
