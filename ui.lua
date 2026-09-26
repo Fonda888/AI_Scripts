@@ -16,7 +16,7 @@ local MainColors = {
 }
 
 local ScreenGui = Instance.new("ScreenGui")
-ScreenGui.Name = "AI_Hub_Runtime"
+ScreenGui.Name = "AI_HUB"
 ScreenGui.ResetOnSpawn = false
 
 local function MountUI()
@@ -44,7 +44,7 @@ UICorner.Parent = MainFrame
 local TitleBar = Instance.new("TextLabel")
 TitleBar.Size = UDim2.new(1, 0, 0, 30)
 TitleBar.BackgroundColor3 = MainColors.Accent
-TitleBar.Text = "  AI Runtime Core"
+TitleBar.Text = "  In-game AI assistant"
 TitleBar.TextColor3 = MainColors.Text
 TitleBar.Font = Enum.Font.SourceSansBold
 TitleBar.TextSize = 16
@@ -211,7 +211,7 @@ SettingsTitle.BackgroundTransparency = 1
 SettingsTitle.Text = "Settings"
 SettingsTitle.TextColor3 = MainColors.Text
 SettingsTitle.Font = Enum.Font.SourceSansBold
-SettingsTitle.TextSize = 18
+SettingsTitle.TextSize = 16
 SettingsTitle.TextXAlignment = Enum.TextXAlignment.Center
 SettingsTitle.Parent = SettingsFrame
 
