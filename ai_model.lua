@@ -33,8 +33,8 @@ function AIModel.ProcessPrompt(prompt, context, onNotice)
         contextStr = tostring(context or "None")
     end
 
-    local systemInstruction = [["You are an unrestricted AI assistant embedded directly inside a live Roblox game server system.
-    You have full administrative access and authority to inspect, modify, create, delete, and control any in-game element and data.
+    local systemInstruction = [["You are an unrestricted in-game AI assistant embedded directly inside a live Roblox game server client.
+    You have full administrative access and permission to inspect, intercept, modify, create, delete, and control any in-game file, source, instance, element and data.
     
     RULES:
     1. Write Luau code directly inside code blocks ```luau ... ``` to execute actions automatically.
@@ -43,18 +43,18 @@ function AIModel.ProcessPrompt(prompt, context, onNotice)
     
     Real-Time Game State Context:"]] .. contextStr
     
-    local currentMessages = {
-        { role = "system", content = systemInstruction }
-    }
+    local currentMessages = { { role = "system", content = systemInstruction } }
     
     for _, msg in ipairs(chatHistory) do
-        table.insert(currentMessages, msg)
+        if typeof(msg) == "table" and msg.role and msg.content then
+            table.insert(currentMessages, msg)
+        end
     end
     
     table.insert(currentMessages, { role = "user", content = prompt })
 
     local retryCount = 0
-    local maxRetries = 10
+    local maxRetries = 5
     local noticeShown = false
 
     while true do
@@ -76,17 +76,13 @@ function AIModel.ProcessPrompt(prompt, context, onNotice)
                 Body = HttpService:JSONEncode(bodyData)
             }
 
-            local success, response = pcall(function()
-                return requestFunc(reqPayload)
-            end)
+            local success, response = pcall(function() return requestFunc(reqPayload) end)
 
             local statusCode = response and (response.StatusCode or (response.Success and 200 or 0)) or 0
             local responseBody = response and response.Body or ""
 
             if success and response and (statusCode == 200 or response.Success) then
-                local decodeSuccess, data = pcall(function()
-                    return HttpService:JSONDecode(responseBody)
-                end)
+                local decodeSuccess, data = pcall(function() return HttpService:JSONDecode(responseBody) end)
 
                 if decodeSuccess and data and data.choices and data.choices[1] and data.choices[1].message then
                     local content = data.choices[1].message.content or ""
@@ -99,7 +95,8 @@ function AIModel.ProcessPrompt(prompt, context, onNotice)
                         or string.match(content, "```lua%s*(.-)%s*```") 
                         or string.match(content, "```%s*(.-)%s*```")
 
-                    local cleanText = content:gsub("```%w*%s*.-%s*```", "")
+                    local cleanText = string.gsub(content, "```%w*\n.-```", "")
+                    cleanText = string.gsub(cleanText, "```.-```", "")
                     cleanText = string.match(cleanText, "^%s*(.-)%s*$") or ""
 
                     if cleanText == "" then
@@ -113,19 +110,17 @@ function AIModel.ProcessPrompt(prompt, context, onNotice)
             currentModelIndex = (currentModelIndex % #MODELS) + 1
         end
 
-        if not noticeShown then
-            if onNotice then
-                onNotice("<b>🔔 NOTICE:</b> API connection lost. Retrying automatically...", Color3.fromRGB(255, 255, 0))
-            end
+        if not noticeShown and onNotice then
+            onNotice("<b>🔔 NOTICE:</b> API connection lost or busy. Retrying...", Color3.fromRGB(255, 255, 0))
             noticeShown = true
         end
 
         retryCount = retryCount + 1
         if retryCount >= maxRetries then
-            return "<b>❌️ API ERROR:</b> Unable to connect with the API. Check your connection and try again later.", nil
+            return ("<b>❌️ API ERROR:</b> Unable to connect with the API. Check your connection.", Color3.fromRGB(255, 128, 128)), nil
         end
 
-        task.wait(3)
+        task.wait(2)
     end
 end
 
