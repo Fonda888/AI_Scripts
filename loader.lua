@@ -56,7 +56,7 @@ UI.OnInput(function(prompt)
             UI.Log("Executing requested action...", Color3.fromRGB(255, 128, 255))
             local success, err = Env.Execute(actionCode)
             if not success then
-                UI.Log("<b>❌ EXECUTION ERROR:</b> " .. tostring(err))
+                UI.Log("<b>❌ EXECUTION ERROR:</b> " .. tostring(err), Color3.fromRGB(255, 128, 128))
                 AI.AppendExecutionResult("Error: " .. tostring(err))
             else
                 AI.AppendExecutionResult("Success: Code executed without errors.")
