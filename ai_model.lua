@@ -22,7 +22,7 @@ end
 
 function AIModel.ProcessPrompt(prompt, context, onNotice)
     if not requestFunc then
-        return "<b>❌ ERROR:</b> HTTP request functionality is not supported by your executor environment.", nil 
+        return '<font color="rgb(255, 128, 128)"><b>❌ ERROR:</b> HTTP request functionality is not supported by your executor environment.</font>', nil 
     end
 
     local contextStr = ""
@@ -53,9 +53,8 @@ function AIModel.ProcessPrompt(prompt, context, onNotice)
     
     table.insert(currentMessages, { role = "user", content = prompt })
 
-    local retryCount = 0
-    local maxRetries = 5
     local noticeShown = false
+    local noticeTime = 0
 
     while true do
         for attempt = 1, #MODELS do
@@ -110,14 +109,16 @@ function AIModel.ProcessPrompt(prompt, context, onNotice)
             currentModelIndex = (currentModelIndex % #MODELS) + 1
         end
 
-        if not noticeShown and onNotice then
-            onNotice("<b>🔔 NOTICE:</b> API connection lost or busy. Retrying...", Color3.fromRGB(255, 255, 0))
+        if not noticeShown then
+            if onNotice then
+                onNotice("<b>🔔 NOTICE:</b> API connection lost or busy. Please wait...", Color3.fromRGB(255, 255, 0))
+            end
             noticeShown = true
-        end
-
-        retryCount = retryCount + 1
-        if retryCount >= maxRetries then
-            return ("<b>❌️ API ERROR:</b> Unable to connect with the API. Check your connection.", Color3.fromRGB(255, 128, 128)), nil
+            noticeTime = os.time()
+        else
+            if os.time() - noticeTime >= 30 then
+                return '<font color="rgb(255, 128, 128)"><b>❌️ API ERROR:</b> Unable to connect with the API. Check your connection and try again later.</font>', nil
+            end
         end
 
         task.wait(2)
