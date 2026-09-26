@@ -96,6 +96,12 @@ local RestoreButton = nil
 local dragRestore, dragStartRes, startPosRes = false, nil, nil
 local hasDraggedRes = false
 
+local dynamicElements = {Corners = {}, Backgrounds = {}, Accents = {}, Texts = {}, Messages = {}}
+
+local function TrackElement(elType, element)
+    table.insert(dynamicElements[elType], element)
+end
+
 local function CreateRestoreButton()
     if RestoreButton and RestoreButton.Parent then
         RestoreButton.Visible = true
@@ -114,10 +120,17 @@ local function CreateRestoreButton()
     local ResCorner = Instance.new("UICorner")
     ResCorner.Parent = RestoreButton
     
+    TrackElement("Backgrounds", RestoreButton)
+    TrackElement("Texts", RestoreButton)
+    TrackElement("Corners", ResCorner)
+    
     local cTheme = Themes[currentTheme]
     RestoreButton.BackgroundColor3 = customBgColor or cTheme.Bg
     RestoreButton.TextColor3 = cTheme.Text
     ResCorner.CornerRadius = UDim.new(0, cTheme.RadiusBtn)
+    if currentTheme == "New" then
+        RestoreButton.Font = Enum.Font.GothamBold
+    end
 
     RestoreButton.InputBegan:Connect(function(input)
         if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
@@ -149,7 +162,7 @@ UIListLayout.Padding = UDim.new(0, 12)
 UIListLayout.SortOrder = Enum.SortOrder.LayoutOrder
 
 local InputBox = Instance.new("TextBox")
-InputBox.Size = UDim2.new(1, -55, 0, 35)
+InputBox.Size = UDim2.new(1, -100, 0, 35)
 InputBox.Position = UDim2.new(0, 10, 1, -45)
 InputBox.Text = ""
 InputBox.PlaceholderText = ' Ask something like "Play specific sound"...'
@@ -166,6 +179,17 @@ local firstFocus = true
 InputBox.Focused:Connect(function()
     if firstFocus then InputBox.PlaceholderText = " Ask anything..."; firstFocus = false end
 end)
+
+local SendBtn = Instance.new("TextButton")
+SendBtn.Size = UDim2.new(0, 35, 0, 35)
+SendBtn.Position = UDim2.new(1, -85, 1, -45)
+SendBtn.Text = ">"
+SendBtn.Font = Enum.Font.SourceSansBold
+SendBtn.TextSize = 18
+SendBtn.Parent = MainFrame
+
+local SendBtnCorner = Instance.new("UICorner")
+SendBtnCorner.Parent = SendBtn
 
 local SettingsBtn = Instance.new("TextButton")
 SettingsBtn.Size = UDim2.new(0, 35, 0, 35)
@@ -211,20 +235,15 @@ SetList.Padding = UDim.new(0, 8)
 SetList.HorizontalAlignment = Enum.HorizontalAlignment.Center
 SetList.SortOrder = Enum.SortOrder.LayoutOrder
 
-local dynamicElements = {Corners = {}, Backgrounds = {}, Accents = {}, Texts = {}}
-
-local function TrackElement(elType, element)
-    table.insert(dynamicElements[elType], element)
-end
-
 TrackElement("Corners", UICorner); TrackElement("Corners", TitleCorner); TrackElement("Corners", MinCorner);
 TrackElement("Corners", InputCorner); TrackElement("Corners", SettingsBtnCorner); TrackElement("Corners", SettingsCorner);
-TrackElement("Corners", DestroyCorner);
-TrackElement("Backgrounds", MainFrame); TrackElement("Backgrounds", MinimizeButton);
+TrackElement("Corners", DestroyCorner); TrackElement("Corners", SendBtnCorner);
+TrackElement("Backgrounds", MainFrame); TrackElement("Backgrounds", MinimizeButton); 
+TrackElement("Backgrounds", SettingsBtn); TrackElement("Backgrounds", SendBtn);
 TrackElement("Accents", TitleBar); TrackElement("Accents", OutputScroll); TrackElement("Accents", InputBox); 
-TrackElement("Accents", SettingsBtn); TrackElement("Accents", SettingsFrame);
+TrackElement("Accents", SettingsFrame);
 TrackElement("Texts", TitleBar); TrackElement("Texts", MinimizeButton); TrackElement("Texts", InputBox); 
-TrackElement("Texts", SettingsBtn); TrackElement("Texts", SettingsTitle);
+TrackElement("Texts", SettingsBtn); TrackElement("Texts", SendBtn); TrackElement("Texts", SettingsTitle);
 
 local function CreateHeader(text, order)
     local lbl = Instance.new("TextLabel")
@@ -240,7 +259,7 @@ local function CreateHeader(text, order)
     return lbl
 end
 
-local function CreateButton(text, order, customParent)
+local function CreateButton(text, order, customParent, exemptBg)
     local btn = Instance.new("TextButton")
     btn.Size = UDim2.new(1, -10, 0, 30)
     btn.Text = text
@@ -252,12 +271,12 @@ local function CreateButton(text, order, customParent)
     corner.Parent = btn
     
     TrackElement("Corners", corner)
-    TrackElement("Backgrounds", btn)
+    if not exemptBg then TrackElement("Backgrounds", btn) end
     TrackElement("Texts", btn)
     return btn
 end
 
-CreateHeader("Style", 1)
+CreateHeader("UI", 1)
 local StyleFrame = Instance.new("Frame")
 StyleFrame.Size = UDim2.new(1, -10, 0, 30)
 StyleFrame.BackgroundTransparency = 1
@@ -306,6 +325,8 @@ local function BuildBgButtons()
             MinimizeButton.BackgroundColor3 = col
             if RestoreButton then RestoreButton.BackgroundColor3 = col end
             if UI.SaveSettings then UI.SaveSettings() end
+            local ApplyTheme = ApplyTheme
+            if ApplyTheme then ApplyTheme() end
         end)
         table.insert(bgButtons, b)
     end
@@ -315,6 +336,9 @@ CreateHeader("Others", 5)
 local btnClear = CreateButton("Clear cache", 6)
 local btnRejoin = CreateButton("Rejoin server", 7)
 local btnHop = CreateButton("Switch server", 8)
+local btnWipe = CreateButton("Wipe data", 9, nil, true)
+
+btnWipe.BackgroundColor3 = Color3.fromRGB(128, 64, 64)
 
 btnClear.MouseButton1Click:Connect(function() end)
 
@@ -347,7 +371,7 @@ local FooterRight = Instance.new("TextLabel")
 FooterRight.Size = UDim2.new(0.5, -5, 0, 20)
 FooterRight.Position = UDim2.new(0.5, 0, 1, -20)
 FooterRight.BackgroundTransparency = 1
-FooterRight.Text = "v0.9 (BETA)"
+FooterRight.Text = "v1.0 (TEST)"
 FooterRight.TextXAlignment = Enum.TextXAlignment.Right
 FooterRight.TextSize = 12
 FooterRight.Font = Enum.Font.SourceSans
@@ -355,22 +379,38 @@ FooterRight.Parent = SettingsFrame
 
 TrackElement("Texts", FooterLeft); TrackElement("Texts", FooterRight);
 
--- Theme Application
 local function ApplyTheme()
     local t = Themes[currentTheme]
+    local targetBgColor = customBgColor or t.Bg
+    
     for _, el in ipairs(dynamicElements.Backgrounds) do 
-        if el == MainFrame or el == MinimizeButton then
-            el.BackgroundColor3 = customBgColor or t.Bg
-        else
-            el.BackgroundColor3 = t.Bg 
-        end
+        el.BackgroundColor3 = targetBgColor
     end
-    for _, el in ipairs(dynamicElements.Accents) do el.BackgroundColor3 = t.Accent end
+    for _, el in ipairs(dynamicElements.Accents) do 
+        el.BackgroundColor3 = t.Accent 
+    end
     for _, el in ipairs(dynamicElements.Texts) do 
         if el.Parent == SettingsFrame and el.BackgroundTransparency == 1 then
             el.TextColor3 = Color3.new(t.Text.R*0.8, t.Text.G*0.8, t.Text.B*0.8)
         else
             el.TextColor3 = t.Text 
+        end
+        if currentTheme == "New" then
+            if el:IsA("TextLabel") or el:IsA("TextButton") or el:IsA("TextBox") then
+                if el.Font == Enum.Font.SourceSansBold then
+                    el.Font = Enum.Font.GothamBold
+                elseif el.Font == Enum.Font.SourceSans then
+                    el.Font = Enum.Font.Gotham
+                end
+            end
+        else
+            if el:IsA("TextLabel") or el:IsA("TextButton") or el:IsA("TextBox") then
+                if el.Font == Enum.Font.GothamBold then
+                    el.Font = Enum.Font.SourceSansBold
+                elseif el.Font == Enum.Font.Gotham then
+                    el.Font = Enum.Font.SourceSans
+                end
+            end
         end
     end
     for _, el in ipairs(dynamicElements.Corners) do 
@@ -379,20 +419,70 @@ local function ApplyTheme()
     
     DestroyCorner.CornerRadius = UDim.new(0, t.RadiusBtn)
     SettingsBtnCorner.CornerRadius = UDim.new(0, t.RadiusBtn)
+    SendBtnCorner.CornerRadius = UDim.new(0, t.RadiusBtn)
+    btnWipe.TextColor3 = Color3.fromRGB(255, 255, 255)
     
     if RestoreButton then
-        RestoreButton.BackgroundColor3 = customBgColor or t.Bg
+        RestoreButton.BackgroundColor3 = targetBgColor
         RestoreButton.TextColor3 = t.Text
         RestoreButton:FindFirstChildOfClass("UICorner").CornerRadius = UDim.new(0, t.RadiusBtn)
     end
     
-    for _, child in ipairs(OutputScroll:GetChildren()) do
-        if child:IsA("TextLabel") then child.TextColor3 = t.Text end
+    for _, msg in ipairs(dynamicElements.Messages) do
+        msg.TextColor3 = t.Text
+        if currentTheme == "New" then
+            msg.BackgroundTransparency = 0.1
+            msg.BackgroundColor3 = t.Accent
+            msg.Font = Enum.Font.Gotham
+        else
+            msg.BackgroundTransparency = 1
+            msg.Font = Enum.Font.Code
+        end
+    end
+    
+    local stroke = MainFrame:FindFirstChild("UIStroke")
+    if not stroke then
+        stroke = Instance.new("UIStroke")
+        stroke.Parent = MainFrame
+    end
+    if currentTheme == "New" then
+        stroke.Enabled = true
+        stroke.Color = t.Accent
+        stroke.Thickness = 2
+        MainFrame.BackgroundTransparency = 0.05
+    else
+        stroke.Enabled = false
+        MainFrame.BackgroundTransparency = 0
     end
     
     BuildBgButtons()
     if UI.SaveSettings then UI.SaveSettings() end
 end
+
+local wipeConfirm = false
+btnWipe.MouseButton1Click:Connect(function()
+    if not wipeConfirm then
+        wipeConfirm = true
+        btnWipe.Text = "Are you sure?"
+        task.delay(3, function()
+            if wipeConfirm then
+                wipeConfirm = false
+                btnWipe.Text = "Wipe data"
+            end
+        end)
+    else
+        wipeConfirm = false
+        btnWipe.Text = "Wipe data"
+        local writefunc = writefile or (pcall(function() return writefile end) and writefile) or nil
+        if writefunc then
+            pcall(function() writefunc("AI_Hub_Settings.json", "{}") end)
+        end
+        customBgColor = nil
+        currentTheme = "Old"
+        ApplyTheme()
+        UI.Log("Data wiped successfully.", Color3.fromRGB(255, 128, 128))
+    end
+end)
 
 btnOld.MouseButton1Click:Connect(function() currentTheme = "Old"; customBgColor = nil; ApplyTheme() end)
 btnNew.MouseButton1Click:Connect(function() currentTheme = "New"; customBgColor = nil; ApplyTheme() end)
@@ -431,15 +521,35 @@ function UI.Log(text, customColor)
     local msg = Instance.new("TextLabel")
     msg.Size = UDim2.new(1, -10, 0, 0)
     msg.AutomaticSize = Enum.AutomaticSize.Y
-    msg.BackgroundTransparency = 1
     msg.Text = "> " .. tostring(text)
     msg.RichText = true
     msg.TextColor3 = customColor or Themes[currentTheme].Text 
-    msg.Font = Enum.Font.Code
     msg.TextSize = 13
     msg.TextXAlignment = Enum.TextXAlignment.Left
     msg.TextWrapped = true
     msg.LayoutOrder = logCount
+    
+    local pad = Instance.new("UIPadding")
+    pad.PaddingLeft = UDim.new(0, 8)
+    pad.PaddingRight = UDim.new(0, 8)
+    pad.PaddingTop = UDim.new(0, 4)
+    pad.PaddingBottom = UDim.new(0, 4)
+    pad.Parent = msg
+    
+    local corner = Instance.new("UICorner")
+    corner.CornerRadius = UDim.new(0, 6)
+    corner.Parent = msg
+    
+    if currentTheme == "New" then
+        msg.BackgroundTransparency = 0.1
+        msg.BackgroundColor3 = Themes["New"].Accent
+        msg.Font = Enum.Font.Gotham
+    else
+        msg.BackgroundTransparency = 1
+        msg.Font = Enum.Font.Code
+    end
+    
+    TrackElement("Messages", msg)
     msg.Parent = OutputScroll
     
     task.defer(function()
@@ -448,14 +558,26 @@ function UI.Log(text, customColor)
     end)
 end
 
+local sendCallback = nil
+
+local function triggerInput()
+    if sendCallback and InputBox.Text ~= "" then
+        local text = InputBox.Text
+        InputBox.Text = ""
+        sendCallback(text)
+    end
+end
+
+InputBox.FocusLost:Connect(function(enterPressed)
+    if enterPressed then
+        triggerInput()
+    end
+end)
+
+SendBtn.MouseButton1Click:Connect(triggerInput)
+
 function UI.OnInput(callback)
-    InputBox.FocusLost:Connect(function(enterPressed)
-        if enterPressed and InputBox.Text ~= "" then
-            local text = InputBox.Text
-            InputBox.Text = ""
-            callback(text)
-        end
-    end)
+    sendCallback = callback
 end
 
 function UI.InitializeSettings(themeName, bgColorArray)
